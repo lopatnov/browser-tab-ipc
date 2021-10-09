@@ -1,18 +1,22 @@
 {
-  "name": "@my-templates/sample-library",
-  "version": "1.1.4",
+  "name": "@lopatnov/browser-tab-ipc",
+  "version": "0.0.0",
   "license": "Apache-2.0",
   "author": "lopatnov",
-  "description": "Demonstrates a sample library template",
-  "homepage": "https://my-templates.github.io/TypeScript-Library/",
+  "description": "Interprocess communication mechanism between browser tabs. A bus network between browser tabs.",
+  "homepage": "https://lopatnov.github.io/browser-tab-ipc/",
   "keywords": [
+    "browser-tabs",
+    "ipc",
+    "bus-network",
+    "share-data-between-tabs",
     "TypeScript",
     "JavaScript",
     "library",
     "typescript-library",
     "javascript-library"
   ],
-  "umdName": "sampleLibrary",
+  "umdName": "browserTabIpc",
   "libraryFile": "library",
   "main": "dist/library.js",
   "module": "dist/library.es.js",
@@ -22,10 +26,10 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/My-Templates/TypeScript-Library.git"
+    "url": "git+https://github.com/lopatnov/browser-tab-ipc.git"
   },
   "bugs": {
-    "url": "https://github.com/My-Templates/TypeScript-Library/issues"
+    "url": "https://github.com/lopatnov/browser-tab-ipc/issues"
   },
   "scripts": {
     "build": "rollup -c rollup.config.ts",
@@ -54,5 +58,8 @@
     "terser": "^5.9.0",
     "ts-jest": "^27.0.5",
     "typescript": "^4.4.3"
+  },
+  "dependencies": {
+    "events": "^3.3.0"
   }
 }
