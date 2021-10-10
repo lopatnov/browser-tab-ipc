@@ -1,2 +1,3 @@
 export { TransportType } from "./transport-type.enum";
-export { BrowserTabIPC } from "./browser-tab-ipc.class";
+export { ConnectionState } from "./connection-state";
+export { BrowserTabIPC, EventConnected, EventConnectionError, EventDisconnected, EventMessage } from "./browser-tab-ipc";
