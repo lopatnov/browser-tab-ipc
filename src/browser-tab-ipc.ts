@@ -7,12 +7,7 @@ import { ConnectionOptions } from './connection-options';
 import { AbstractTransport } from './abstract-transport';
 import { SessionStorageTransport } from './session-storage-transport';
 import { IpcOptions } from './ipc-options';
-
-export const EventConnected = 'connected';
-export const EventConnectionError = 'connectionError';
-export const EventDisconnected = 'disconnected';
-export const EventMessage = 'message';
-
+import { EventConnected, EventConnectionError, EventDisconnected, EventMessage } from './const';
 export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   private transportTypes!: TransportType[];
   private transport?: AbstractTransport;
@@ -29,22 +24,22 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
 
   constructor(options?: IpcOptions) {
     super();
-    this.initTransportTypes(options)
+    this.transportTypes = this.initTransportTypes(options)
   }
 
   private initTransportTypes(options?: IpcOptions) {
     if (!options?.transportTypes) {
-      this.transportTypes = [TransportType.sharedWorker, TransportType.sessionStorage];
+      return [TransportType.sharedWorker, TransportType.sessionStorage];
     } else if (Array.isArray(options?.transportTypes) && options!.transportTypes.length) {
-      this.transportTypes = options.transportTypes;
+      return options.transportTypes;
     } else {
-      this.transportTypes = [options.transportTypes as TransportType]
+      return [options.transportTypes as TransportType]
     }
   }
 
   public connect(options?: ConnectionOptions): Promise<ConnectionState> {
     const lastTransport = this.transport;
-    this.transport = this.selectTransport();
+    this.transport = this.selectTransport(this.transport);
     if (!this.transport) {
       return this.failConnect();
     }
@@ -54,9 +49,9 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
     return this.transport.connect(options);
   }
 
-  private selectTransport() {
-    if (!!this.transport)
-      return this.transport;
+  private selectTransport(currentValue?: AbstractTransport) {
+    if (!!currentValue)
+      return currentValue;
     if (SharedWorkerTransport.isSupported() && this.transportTypes.indexOf(TransportType.sharedWorker) > -1)
       return new SharedWorkerTransport();
     if (SessionStorageTransport.isSupported() && this.transportTypes.indexOf(TransportType.sessionStorage) > -1)
