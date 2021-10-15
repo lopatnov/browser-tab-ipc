@@ -2,7 +2,7 @@ import { SharedWorkerTransport } from './shared-worker-transport';
 import { TransportType } from './transport-type.enum';
 import { ConnectionState } from './connection-state';
 import { Action1 } from './functors';
-import { EventEmitter } from "events";
+import EventEmitter from "events";
 import { ConnectionOptions } from './connection-options';
 import { AbstractTransport } from './abstract-transport';
 import { SessionStorageTransport } from './session-storage-transport';
@@ -12,15 +12,31 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   private transportTypes!: TransportType[];
   private transport?: AbstractTransport;
 
-  private onConnected = (state: ConnectionState) => this.emit(EventConnected, state);
-  private onConnectionError = (state: ConnectionState) => this.emit(EventConnectionError, state);
-  private onDisconnected = (state: ConnectionState) => this.emit(EventDisconnected, state);
-  private onMessage = (state: any) => this.emit(EventMessage, state);
+  private onConnected(state: ConnectionState) {
+    this.emit(EventConnected, state);
+  }
+  private onConnectionError(state: ConnectionState) {
+    this.emit(EventConnectionError, state);
+  }
+  private onDisconnected(state: ConnectionState) {
+    this.emit(EventDisconnected, state);
+  }
+  private onMessage(state: any) {
+    this.emit(EventMessage, state);
+  }
 
-  public connected = (callback: Action1<ConnectionState>) => this.on(EventConnected, callback);
-  public connectionError = (callback: Action1<ConnectionState>) => this.on(EventConnectionError, callback);
-  public disconnected = (callback: Action1<ConnectionState>) => this.on(EventDisconnected, callback);
-  public message = (callback: Action1<any>) => this.on(EventMessage, callback);
+  public connected (callback: Action1<ConnectionState>) {
+    return this.on(EventConnected, callback);
+  }
+  public connectionError (callback: Action1<ConnectionState>) {
+    return this.on(EventConnectionError, callback);
+  }
+  public disconnected(callback: Action1<ConnectionState>) {
+    return this.on(EventDisconnected, callback);
+  }
+  public message(callback: Action1<any>) {
+    return this.on(EventMessage, callback);
+  }
 
   constructor(options?: IpcOptions) {
     super();
@@ -81,7 +97,15 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   }
 
   public disconnect(): Promise<ConnectionState> {
+    this.unsubscribeEvents();
     return this.transport?.disconnect() ?? Promise.reject("Undefined connection");
+  }
+
+  private unsubscribeEvents() {
+    this.removeAllListeners(EventConnected);
+    this.removeAllListeners(EventConnectionError);
+    this.removeAllListeners(EventDisconnected);
+    this.removeAllListeners(EventMessage);
   }
 
   public postMessage(message: any): Promise<void> {

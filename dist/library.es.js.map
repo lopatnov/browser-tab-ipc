@@ -1,1 +1,3 @@
-{"version":3,"file":"library.es.js","sources":["../src/library.ts"],"sourcesContent":["export default function sampleLibrary() {\r\n  return \"Hello World!\";\r\n}\r\n"],"names":[],"mappings":"SAAwB,aAAa;IACnC,OAAO,cAAc,CAAC;AACxB;;;;"}
+version https://git-lfs.github.com/spec/v1
+oid sha256:b0d9298971375a3a799ec4eb965165674568eec7a3468e1f50ac2093b3dc07ce
+size 56543

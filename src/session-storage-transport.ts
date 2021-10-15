@@ -1,33 +1,52 @@
-import { EventEmitter } from 'events';
+import EventEmitter from 'events';
 import { AbstractTransport } from './abstract-transport';
 import { ConnectionOptions } from './connection-options';
 import { ConnectionState } from './connection-state';
 import { Action1 } from './functors';
-import { EventConnected, EventConnectionError, EventDisconnected, EventMessage, sessionStoragePrefix } from './const';
+import { EventConnected, EventConnectionError, EventDisconnected, EventMessage, DefaultSessionStorageKeyPrefix } from './const';
+import { ClientMessage } from './client-message';
 
 export class SessionStorageTransport extends EventEmitter implements AbstractTransport {
-  static isSupported = () => !!self.sessionStorage;
+  static isSupported() {
+    return !!sessionStorage;
+  }
 
-  private onConnected = (state: ConnectionState) => this.emit(EventConnected, state);
-  private onConnectionError = (state: ConnectionState) => this.emit(EventConnectionError, state);
-  private onDisconnected = (state: ConnectionState) => this.emit(EventDisconnected, state);
-  private onMessage = (state: any) => this.emit(EventMessage, state);
+  private onConnected(state: ConnectionState) {
+    this.emit(EventConnected, state);
+  }
+  private onConnectionError(state: ConnectionState) {
+    this.emit(EventConnectionError, state);
+  }
+  private onDisconnected(state: ConnectionState) {
+    this.emit(EventDisconnected, state);
+  }
+  private onMessage(state: any) {
+    this.emit(EventMessage, state);
+  }
 
-  public connected = (callback: Action1<ConnectionState>) => this.on(EventConnected, callback);
-  public connectionError = (callback: Action1<ConnectionState>) => this.on(EventConnectionError, callback);
-  public disconnected = (callback: Action1<ConnectionState>) => this.on(EventDisconnected, callback);
-  public message = (callback: Action1<any>) => this.on(EventMessage, callback);
+  public connected(callback: Action1<ConnectionState>) {
+    this.on(EventConnected, callback);
+  }
+  public connectionError(callback: Action1<ConnectionState>) {
+    this.on(EventConnectionError, callback);
+  }
+  public disconnected(callback: Action1<ConnectionState>) {
+    this.on(EventDisconnected, callback);
+  }
+  public message(callback: Action1<any>) {
+    this.on(EventMessage, callback);
+  }
 
   private nativeStorageEvent: ((this: Window, ev: StorageEvent) => any) | null = null;
   private clientId: number = 0;
-  private keyPrefix: string = sessionStoragePrefix;
+  private keyPrefix: string = DefaultSessionStorageKeyPrefix;
   isConnected: boolean = false;
 
   async connect(options?: ConnectionOptions): Promise<ConnectionState> {
     if (!SessionStorageTransport.isSupported()) {
       return this.failNotSupported();
     }
-    this.keyPrefix = options?.keyPrefix || sessionStoragePrefix;
+    this.keyPrefix = options?.sessionStorageKeyPrefix || DefaultSessionStorageKeyPrefix;
     const clients = this.getClientIds(this.keyPrefix)
     this.clientId = this.generateId(clients);
     this.addClientId(clients, this.clientId);
@@ -70,50 +89,72 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
   }
 
   private maxValue(a: Array<number>) {
-    return (a.length && a.reduce((p, v) => ( p > v ? p : v ))) || 0;
+    return (a.length && a.reduce((p, v) => (p > v ? p : v))) || 0;
   }
 
   private subscribeStorage() {
     if (this.nativeStorageEvent)
       return true;
     this.nativeStorageEvent = onstorage;
-    onstorage = e => {
+    onstorage = e => { // tbd change window.addEventListener('storage', function(e) {});
       if (e.storageArea === sessionStorage) {
-        for (let i = 0; i < sessionStorage.length; i++) {
-          const key = sessionStorage.key(i);
-          if (key?.startsWith(this.keyPrefix)) {
-            const mString = sessionStorage.getItem(key);
-            if (mString) {
-              const mObject = JSON.parse(mString);
-              const mClients: number[] = mObject.clients;
-              if (mClients.indexOf(this.clientId) < 0) {
-                mClients.push(this.clientId);
-                var clients = this.getClientIds(this.keyPrefix);
-                if (mClients.length === clients.length) {
-                  sessionStorage.removeItem(key);
-                } else {
-                  sessionStorage.setItem(key, JSON.stringify({
-                    clients: mClients,
-                    message: mObject.message
-                  }));
-                }
-                this.onMessage(mObject.message);
-              }
-            }
-          }
-        }
+        this.onSessionStorageChange();
       }
       this.nativeStorageEvent && this.nativeStorageEvent.call(window, e);
     };
+    window.addEventListener("beforeunload", e => this.disconnect(), {
+      once: true,
+      passive: true
+    });
+  }
+
+  private isAllClients(msgClients: number[], allClients: number[]) {
+    return msgClients.length === allClients.length && allClients.some(r=> msgClients.indexOf(r) >= 0)
+  }
+
+  private removeObsoleteMessages(msgClients: number[], key: string, msgObject: ClientMessage) {
+    var clients = this.getClientIds(this.keyPrefix);
+    if (this.isAllClients(msgClients, clients)) {
+      sessionStorage.removeItem(key);
+    } else {
+      sessionStorage.setItem(key, JSON.stringify({
+        clients: msgClients,
+        message: msgObject.message
+      }));
+    }
+  }
+
+  private onSessionStorageChange() {
+    const msgPrefix = `${this.keyPrefix}_msg_`;
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key?.startsWith(msgPrefix)) {
+        const value = sessionStorage.getItem(key);
+        if (value) {
+          const msgObject: ClientMessage = JSON.parse(value);
+          const msgClients = msgObject.clients;
+          if (msgClients.indexOf(this.clientId) === -1) {
+            msgClients.push(this.clientId);
+            this.removeObsoleteMessages(msgClients, key, msgObject);
+            this.onMessage(msgObject.message);
+          }
+        }
+      }
+    }
   }
 
   async disconnect(): Promise<ConnectionState> {
-    this.unsubscribeStorage();
-    this.removeClientId();
-    this.isConnected = false;
     const state: ConnectionState = {
       connected: this.isConnected
     };
+    if (!this.isConnected) {
+      return {
+        connected: this.isConnected
+      };
+    }
+    state.connected = this.isConnected = false;
+    this.unsubscribeStorage();
+    this.removeClientId();
     this.onDisconnected(state);
     return state;
   }
@@ -138,10 +179,12 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
   async postMessage(message: any): Promise<void> {
     if (!this.isConnected)
       return;
-    sessionStorage.setItem(`${this.keyPrefix}_msg_${+new Date()}`, JSON.stringify({
+
+    const msgObject: ClientMessage = {
       clients: [this.clientId],
       message
-    }));
-  }
+    };
 
+    sessionStorage.setItem(`${this.keyPrefix}_msg_${+new Date()}`, JSON.stringify(msgObject));
+  }
 }
