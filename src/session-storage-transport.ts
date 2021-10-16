@@ -8,7 +8,7 @@ import { ClientMessage } from './client-message';
 
 export class SessionStorageTransport extends EventEmitter implements AbstractTransport {
   static isSupported() {
-    return !!sessionStorage;
+    return !!localStorage;
   }
 
   private onConnected(state: ConnectionState) {
@@ -71,11 +71,11 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
   }
 
   private getClientIds(prefix: string): Array<number> {
-    return JSON.parse(sessionStorage.getItem(`${prefix}_clients`) || '') || [];
+    return JSON.parse(localStorage.getItem(`${prefix}_clients`) || '[]');
   }
 
   private updateClientIds(prefix: string, clients: number[]) {
-    sessionStorage.setItem(`${prefix}_clients`, JSON.stringify(clients));
+    localStorage.setItem(`${prefix}_clients`, JSON.stringify(clients));
   }
 
   private addClientId(clients: number[], clientId: number) {
@@ -96,16 +96,14 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
     if (this.nativeStorageEvent)
       return true;
     this.nativeStorageEvent = onstorage;
-    onstorage = e => { // tbd change window.addEventListener('storage', function(e) {});
-      if (e.storageArea === sessionStorage) {
-        this.onSessionStorageChange();
+    window.addEventListener('storage', e => {
+      if (e.key === this.keyPrefix) {
+        this.onlocalStorageChange();
       }
       this.nativeStorageEvent && this.nativeStorageEvent.call(window, e);
-    };
-    window.addEventListener("beforeunload", e => this.disconnect(), {
-      once: true,
-      passive: true
     });
+    window.addEventListener("beforeunload", e =>
+      this.disconnect());
   }
 
   private isAllClients(msgClients: number[], allClients: number[]) {
@@ -115,21 +113,21 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
   private removeObsoleteMessages(msgClients: number[], key: string, msgObject: ClientMessage) {
     var clients = this.getClientIds(this.keyPrefix);
     if (this.isAllClients(msgClients, clients)) {
-      sessionStorage.removeItem(key);
+      localStorage.removeItem(key);
     } else {
-      sessionStorage.setItem(key, JSON.stringify({
+      localStorage.setItem(key, JSON.stringify({
         clients: msgClients,
         message: msgObject.message
       }));
     }
   }
 
-  private onSessionStorageChange() {
+  private onlocalStorageChange() {
     const msgPrefix = `${this.keyPrefix}_msg_`;
-    for (let i = 0; i < sessionStorage.length; i++) {
-      const key = sessionStorage.key(i);
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
       if (key?.startsWith(msgPrefix)) {
-        const value = sessionStorage.getItem(key);
+        const value = localStorage.getItem(key);
         if (value) {
           const msgObject: ClientMessage = JSON.parse(value);
           const msgClients = msgObject.clients;
@@ -171,8 +169,10 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
       return;
     const clients = this.getClientIds(this.keyPrefix);
     const index = clients.indexOf(this.clientId);
-    if (index > -1)
-      clients.splice(index, 1)
+    if (index > -1) {
+      clients.splice(index, 1);
+      this.updateClientIds(this.keyPrefix, clients);
+    }
     this.clientId = 0;
   }
 
@@ -185,6 +185,7 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
       message
     };
 
-    sessionStorage.setItem(`${this.keyPrefix}_msg_${+new Date()}`, JSON.stringify(msgObject));
+    localStorage.setItem(`${this.keyPrefix}_msg_${+new Date()}`, JSON.stringify(msgObject));
+    localStorage.setItem(this.keyPrefix, new Date().toUTCString());
   }
 }
