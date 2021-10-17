@@ -1,14 +1,3 @@
-(function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
-  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.sampleLibrary = factory());
-})(this, (function () { 'use strict';
-
-  function sampleLibrary() {
-      return "Hello World!";
-  }
-
-  return sampleLibrary;
-
-}));
-//# sourceMappingURL=library.js.map
+version https://git-lfs.github.com/spec/v1
+oid sha256:87b450514de5820722214fd6fa179d938f569e406945e292fbbf071d50dfdba9
+size 32768

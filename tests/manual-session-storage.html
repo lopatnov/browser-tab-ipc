@@ -1,0 +1,22 @@
+<html>
+
+<head>
+    <script src="../dist/library.js"></script>
+    <script>
+        let ipc = new browserTabIpc.BrowserTabIPC({
+            transportTypes: [browserTabIpc.TransportType.sessionStorage]
+        });
+
+        ipc.message(function(e){
+            console.log(e);
+        })
+
+        ipc.connect();
+
+        setTimeout(()=> {
+            ipc.postMessage('Hello');
+        }, 1000);
+    </script>
+</head>
+
+</html>
