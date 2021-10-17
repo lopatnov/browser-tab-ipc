@@ -16,7 +16,7 @@
 [![sobe.ru](https://img.shields.io/static/v1?label=sobe.ru&message=%D0%91%D0%BB%D0%B0%D0%B3%D0%BE%D0%B4%D0%B0%D1%80%D0%BD%D0%BE%D1%81%D1%82%D1%8C&color=yellow&logo=data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAArlBMVEUAAAD//////////////////////////////////////////////////////////////////PP/3l7/9c//0yb/zAD/6ZP/zQf/++7/3FD/88X/0h7//v7/5oX/zATUqQDktgD/5HjQpgAFBACQcwD/zw/fsgCOcQD6yADZrQD2xAD8yQDnuADxwADcsADbrwDpugD3xQD5xwDjtQDywQD+ywD9ygDvvwD7yAD/1jRaObVGAAAAEHRSTlMAA3zg707pEJP8MMUBYN5fiwXJMQAAAAFiS0dEAf8CLd4AAAAHdElNRQflBgMAAxO4O2jCAAAAuElEQVQoz42S1w7CMAxFS8ueYZgNLZuyRynw/z9GdtxIkbgPceQT6Tq2vZwfEKx8wRPyiaViSYDABqQsAMq0OzxUqhbo9kBcavUM6A9AAtJAYDgC0ID7i+t4AghwfxanszlAGBnA/Flc0MfL1doA5s/ChoLtbg8QI392gpIBzf/AwYAWAsdTrIE05/nz5Xq7S6DKpenHM0pe+o/qg5Am74/0ybTkm+q6wG4iltV2LTko52idy+Banx9RYiS6Vrsc3AAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMS0wNi0wM1QwMDowMzoxOCswMDowMLvSSCkAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjEtMDYtMDNUMDA6MDM6MTgrMDA6MDDKj/CVAAAAAElFTkSuQmCC)](https://sobe.ru/na/tech_knigi)
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-lopatnov-informational?style=social&logo=linkedin)](https://www.linkedin.com/in/lopatnov/)
 
-The TypeScript library template. Click "Use this template on GitHub".
+Inter-process communication mechanism between browser tabs. A bus network between browser tabs.
 
 ## Install
 
@@ -29,7 +29,7 @@ npm install @lopatnov/browser-tab-ipc
 [Browser](//lopatnov.github.io/browser-tab-ipc/dist/library.js)
 
 ```html
-<script src="//lopatnov.github.io/browser-tab-ipc/dist/library.min.js"></script>
+<script src="https://lopatnov.github.io/browser-tab-ipc/dist/library.min.js"></script>
 ```
 
 ## Import package to the project
@@ -46,40 +46,26 @@ import sampleLibrary from "@lopatnov/browser-tab-ipc";
 var sampleLibrary = require("@lopatnov/browser-tab-ipc");
 ```
 
-## package.json
+## How to use
 
-Change variables:
+```html
+<script src="https://lopatnov.github.io/browser-tab-ipc/dist/library.min.js"></script>
+<script>
+    let ipc = new browserTabIpc.BrowserTabIPC({
+        transportTypes: [browserTabIpc.TransportType.sessionStorage]
+    });
 
-- name
-- description
-- umdName
-- libraryFile
-- main
-- module
-- types
-- homepage
-- repository
-- bugs
-- keywords
+    ipc.message(function(e){
+        console.log(e);
+    })
 
-## GitHub publish configurations
+    ipc.connect();
 
-- npm_token
-- github_token
-
-## Configure commands
-
-`npm run build`
-
-`npm run watch`
-
-`npm run test`
-
-## Demo
-
-See, how it's working: [https://runkit.com/lopatnov/browser-tab-ipc](https://runkit.com/lopatnov/browser-tab-ipc)
-
-Test it with a runkit: [https://npm.runkit.com/@lopatnov/browser-tab-ipc](https://npm.runkit.com/%40lopatnov%2Fbrowser-tab-ipc)
+    setTimeout(()=> {
+        ipc.postMessage('Hello');
+    }, 1000);
+</script>
+```
 
 ## Rights and Agreements
 

@@ -68,8 +68,8 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   private selectTransport(currentValue?: AbstractTransport) {
     if (!!currentValue)
       return currentValue;
-    if (SharedWorkerTransport.isSupported() && this.transportTypes.indexOf(TransportType.sharedWorker) > -1)
-      return new SharedWorkerTransport();
+    // if (SharedWorkerTransport.isSupported() && this.transportTypes.indexOf(TransportType.sharedWorker) > -1)
+    //   return new SharedWorkerTransport();
     if (SessionStorageTransport.isSupported() && this.transportTypes.indexOf(TransportType.sessionStorage) > -1)
       return new SessionStorageTransport();
   }
