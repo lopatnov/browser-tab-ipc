@@ -12,7 +12,7 @@ describe('Tests', () => {
 
   beforeAll(async () => {
     browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       slowMo: 80,
       timeout: 0,
       args: [`--window-size=${width},${height}`]
