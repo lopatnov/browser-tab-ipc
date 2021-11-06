@@ -1,45 +1,57 @@
-import 'expect-puppeteer';
-import puppeteer from "puppeteer";
+import path from 'path';
+import { default as puppeteer, Browser, Page } from "puppeteer";
 
-import { BrowserTabIPC, TransportType } from "../src/library";
+describe('Tests', () => {
+  var browser: Browser;
+  var page1: Page;
+  var page2: Page;
+  const width = 800;
+  const height = 600;
+  const relativeUrl = './demo.html';
+  const url = 'file:///' + path.join(__dirname, relativeUrl);
 
-describe('Google', () => {
-  // var browser;
-  // var page;
-  // const width = 800;
-  // const height = 600;
   beforeAll(async () => {
-    await page.goto('https://google.com');
-    // browser = await puppeteer.launch({
-    //   headless: false,
-    //   slowMo: 80,
-    //   args: [`--window-size=${width},${height}`]
-    // });
-    // page = await browser.newPage();
-    // await page.setViewport({ width, height });
+    browser = await puppeteer.launch({
+      headless: false,
+      slowMo: 80,
+      timeout: 0,
+      args: [`--window-size=${width},${height}`]
+    });
+    page1 = await browser.newPage();
+    page2 = await browser.newPage();
+    page1.setViewport({ width, height });
+    page2.setViewport({ width, height });
+    await page1.goto(url);
+    await page2.goto(url);
   });
 
-  it('should be titled "Google"', async () => {
-    await expect(page.title()).resolves.toMatch('Google');
+  it('should be titled correctly', async () => {
+    await expect(page1.title()).resolves.toMatch('browser-tab-ipc demo');
+    await expect(page2.title()).resolves.toMatch('browser-tab-ipc demo');
+  });
+
+  it('should send a message', async () => {
+    const message = 'A message from page 1';
+
+    await page1.evaluate(async () => {
+      const anchor = document.querySelector('#text') as HTMLInputElement;
+      anchor.value = 'A message from page 1';
+    });
+    await page1.$eval( '#sendBtn', el => (el as HTMLElement).click() );
+    await page2.waitForSelector('#history li mark.tertiary', {
+      timeout: 3000
+    });
+
+    const receivedElement = await page2.$('#history li span.re');
+    await expect(receivedElement).toBeTruthy();
+    const text = await page2.evaluate(() => {
+      const anchor = document.querySelector('#history li span.re');
+      return anchor.textContent;
+    });
+    await expect(text).toBe(message);
+  });
+
+  afterAll(async () => {
+    await browser?.close();
   });
 });
-
-// describe("Base tests", () => {
-//   it("should create BrowserTabIPC", () => {
-//     const ipc = new BrowserTabIPC();
-
-//     expect(ipc).toBeTruthy();
-//   });
-
-//   it("should connect using Session Storage transport", async () => {
-//     let actualAvailabilityOfConnection = false;
-//     const ipc = new BrowserTabIPC({
-//       transportTypes: [TransportType.sessionStorage]
-//     });
-
-//     const state = await ipc.connect();
-//     actualAvailabilityOfConnection = state.connected;
-
-//     expect(actualAvailabilityOfConnection).toBeTruthy();
-//   });
-// });
