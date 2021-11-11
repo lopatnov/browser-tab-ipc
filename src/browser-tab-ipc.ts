@@ -1,13 +1,18 @@
-import { SharedWorkerTransport } from './shared-worker-transport';
-import { TransportType } from './transport-type.enum';
-import { ConnectionState } from './connection-state';
-import { Action1 } from './functors';
-import EventEmitter from "events";
-import { ConnectionOptions } from './connection-options';
-import { AbstractTransport } from './abstract-transport';
-import { SessionStorageTransport } from './session-storage-transport';
-import { IpcOptions } from './ipc-options';
-import { EventConnected, EventConnectionError, EventDisconnected, EventMessage } from './const';
+import {SharedWorkerTransport} from './shared-worker-transport';
+import {TransportType} from './transport-type.enum';
+import {ConnectionState} from './connection-state';
+import {Action1} from './functors';
+import EventEmitter from 'events';
+import {ConnectionOptions} from './connection-options';
+import {AbstractTransport} from './abstract-transport';
+import {SessionStorageTransport} from './session-storage-transport';
+import {IpcOptions} from './ipc-options';
+import {
+  EventConnected,
+  EventConnectionError,
+  EventDisconnected,
+  EventMessage,
+} from './const';
 export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   private transportTypes!: TransportType[];
   private transport?: AbstractTransport;
@@ -25,10 +30,10 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
     this.emit(EventMessage, state);
   }
 
-  public connected (callback: Action1<ConnectionState>) {
+  public connected(callback: Action1<ConnectionState>) {
     return this.on(EventConnected, callback);
   }
-  public connectionError (callback: Action1<ConnectionState>) {
+  public connectionError(callback: Action1<ConnectionState>) {
     return this.on(EventConnectionError, callback);
   }
   public disconnected(callback: Action1<ConnectionState>) {
@@ -40,16 +45,19 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
 
   constructor(options?: IpcOptions) {
     super();
-    this.transportTypes = this.initTransportTypes(options)
+    this.transportTypes = this.initTransportTypes(options);
   }
 
   private initTransportTypes(options?: IpcOptions) {
     if (!options?.transportTypes) {
       return [TransportType.sharedWorker, TransportType.sessionStorage];
-    } else if (Array.isArray(options?.transportTypes) && options!.transportTypes.length) {
+    } else if (
+      Array.isArray(options?.transportTypes) &&
+      options!.transportTypes.length
+    ) {
       return options.transportTypes;
     } else {
-      return [options.transportTypes as TransportType]
+      return [options.transportTypes as TransportType];
     }
   }
 
@@ -66,19 +74,21 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   }
 
   private selectTransport(currentValue?: AbstractTransport) {
-    if (!!currentValue)
-      return currentValue;
+    if (!!currentValue) return currentValue;
     // if (SharedWorkerTransport.isSupported() && this.transportTypes.indexOf(TransportType.sharedWorker) > -1)
     //   return new SharedWorkerTransport();
-    if (SessionStorageTransport.isSupported() && this.transportTypes.indexOf(TransportType.sessionStorage) > -1)
+    if (
+      SessionStorageTransport.isSupported() &&
+      this.transportTypes.indexOf(TransportType.sessionStorage) > -1
+    )
       return new SessionStorageTransport();
   }
 
   private subscribeTransport() {
-    this.transport!.connected(state => this.onConnected(state));
-    this.transport!.connectionError(state => this.onConnectionError(state));
-    this.transport!.disconnected(state => this.onDisconnected(state));
-    this.transport!.message(content => this.onMessage(content));
+    this.transport!.connected((state) => this.onConnected(state));
+    this.transport!.connectionError((state) => this.onConnectionError(state));
+    this.transport!.disconnected((state) => this.onDisconnected(state));
+    this.transport!.message((content) => this.onMessage(content));
   }
 
   private failConnect() {
@@ -86,19 +96,22 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
 
     this.onConnectionError({
       connected: false,
-      error: errorMessage
+      error: errorMessage,
     });
 
     const reason: ConnectionState = {
       error: errorMessage,
-      connected: false
+      connected: false,
     };
     return Promise.reject(reason);
   }
 
   public disconnect(): Promise<ConnectionState> {
     this.unsubscribeEvents();
-    return this.transport?.disconnect() ?? Promise.reject("Undefined connection");
+    return (
+      this.transport?.disconnect() ??
+      Promise.reject(new Error('Undefined connection'))
+    );
   }
 
   private unsubscribeEvents() {
@@ -114,5 +127,4 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
     }
     return this.transport!.postMessage(message);
   }
-
 }
