@@ -1,6 +1,6 @@
-import path from 'path';
 import {default as puppeteer, Browser, Page} from 'puppeteer';
-import {exec, ChildProcess} from 'node:child_process';
+import {spawn, ChildProcess} from 'node:child_process';
+import kill from 'tree-kill';
 
 describe('Tests', () => {
   let cmd: ChildProcess;
@@ -15,7 +15,7 @@ describe('Tests', () => {
   jest.setTimeout(100000);
 
   beforeAll(async () => {
-    cmd = exec('npm start', {cwd: __dirname});
+    cmd = spawn('npm start', {cwd: __dirname, shell: true});
     browser = await puppeteer.launch({
       headless: false,
       slowMo: 80,
@@ -59,6 +59,6 @@ describe('Tests', () => {
 
   afterAll(async () => {
     await browser?.close();
-    cmd.kill();
+    if (cmd.pid) kill(cmd.pid);
   });
 });
