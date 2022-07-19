@@ -37,6 +37,7 @@
     "release": "release-it minor",
     "configure-npm": "node ./set-registry.js -s https://registry.npmjs.org",
     "configure-gpr": "node ./set-registry.js -s https://npm.pkg.github.com",
+    "start": "express-reverse-proxy",
     "test": "jest"
   },
   "publishConfig": {
@@ -77,6 +78,7 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
+    "@lopatnov/express-reverse-proxy": "^1.1.1",
     "events": "^3.3.0"
   }
 }
