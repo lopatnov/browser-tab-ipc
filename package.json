@@ -32,12 +32,13 @@
     "url": "https://github.com/lopatnov/browser-tab-ipc/issues"
   },
   "scripts": {
+    "start": "npm run build && npm run serve",
     "build": "rollup -c rollup.config.ts",
     "watch": "rollup -cw rollup.config.ts",
     "release": "release-it minor",
     "configure-npm": "node ./set-registry.js -s https://registry.npmjs.org",
     "configure-gpr": "node ./set-registry.js -s https://npm.pkg.github.com",
-    "start": "express-reverse-proxy",
+    "serve": "express-reverse-proxy",
     "test": "jest"
   },
   "publishConfig": {

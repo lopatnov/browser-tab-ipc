@@ -16,21 +16,37 @@
                 <h1>Browser tab chat</h1>
             </div>
         </div>
-        <div class="row">
-            <div class="col-sm-12">
-                <ul id="history">
-                    <li>Connecting...</li>
-                </ul>
-            </div>
-        </div>
-        <div class="row">
+        <div id="options" class="row options">
             <div class="col-sm-12">
                 <fieldset>
-                    <legend>Enter text</legend>
-                    <label for="text">Text</label>
-                    <input type="text" id="text" placeholder="Enter Text"/>
-                    <button id="sendBtn">Send</button>
+                    <legend>Transport</legend>
+                    <input type="radio" id="anyTransport" name="transport" value="anyTransport" checked /><label
+                        for="anyTransport">Any</label>
+                    <input type="radio" id="sharedWorkerTransport" name="transport"
+                        value="sharedWorkerTransport" /><label for="sharedWorkerTransport">Shared Worker</label>
+                    <input type="radio" id="localStorageTransport" name="transport"
+                        value="localStorageTransport" /><label for="localStorageTransport">Local Storage</label>
+                    <button id="connectBtn">Connect</button>
                 </fieldset>
+            </div>
+        </div>
+        <div class="browser-chat hidden">
+            <div class="row">
+                <div class="col-sm-12">
+                    <ul id="history">
+                        <li>Connecting...</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12">
+                    <fieldset>
+                        <legend>Enter text</legend>
+                        <label for="text">Text</label>
+                        <input type="text" id="text" placeholder="Enter Text" />
+                        <button id="sendBtn">Send</button>
+                    </fieldset>
+                </div>
             </div>
         </div>
     </div>

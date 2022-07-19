@@ -15,7 +15,7 @@ describe('Tests', () => {
   jest.setTimeout(100000);
 
   beforeAll(async () => {
-    cmd = spawn('npm start', {cwd: __dirname, shell: true});
+    cmd = spawn('npm run serve', {cwd: __dirname, shell: true});
     browser = await puppeteer.launch({
       headless: false,
       slowMo: 80,

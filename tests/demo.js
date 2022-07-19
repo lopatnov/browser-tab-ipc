@@ -1,13 +1,48 @@
-$(function() {
-  const ipc = new browserTabIpc.BrowserTabIPC();
+$(function () {
+  let ipc;
 
-  ipc.message(function(e) {
-    $('#history').append($('<li>').html(`<mark class="tertiary">Re:</mark> <span class="re">${e}</span>`));
-  });
+  function connect(transportTypes) {
+    ipc = new browserTabIpc.BrowserTabIPC({
+      transportTypes: transportTypes,
+    });
 
-  ipc.connect().then(function(e) {
-    $('#history').append($('<li>').html(`Connected: ${e.connected}`));
-  });
+    ipc.message(function (e) {
+      $('#history').append($('<li>').html(`<mark class="tertiary">Re:</mark> <span class="re">${e}</span>`));
+    });
+
+    ipc
+      .connect()
+      .then(function (e) {
+        $('#history').append($('<li>').html(`Connected: ${e.connected}`));
+      })
+      .catch(function (e) {
+        console.error(e);
+        $('#history').append($('<li>').html(`Connection Error: ${JSON.stringify(e)}`));
+      });
+  }
+
+  function getTransportType() {
+    const option = $('input[name=transport]:checked', '#options').val();
+    switch (option) {
+      case 'sharedWorkerTransport':
+        return browserTabIpc.TransportType.sharedWorker;
+      case 'localStorageTransport':
+        return browserTabIpc.TransportType.sessionStorage;
+      default:
+        return undefined;
+    }
+  }
+
+  function showChat() {
+    $('.options.row').hide();
+    $('.hidden.browser-chat').removeClass('hidden');
+  }
+
+  function connectClick() {
+    const transportType = getTransportType();
+    connect(transportType);
+    showChat();
+  }
 
   function sendMessage() {
     const value = $('#text').val();
@@ -29,8 +64,9 @@ $(function() {
     clear();
   }
 
+  $('#connectBtn').click(connectClick);
   $('#sendBtn').click(sendClick);
-  $('#text').on('keypress', function(e) {
+  $('#text').on('keypress', function (e) {
     if (e.which == 13) {
       sendClick();
     }

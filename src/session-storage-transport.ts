@@ -3,19 +3,10 @@ import {AbstractTransport} from './abstract-transport';
 import {ConnectionOptions} from './connection-options';
 import {ConnectionState} from './connection-state';
 import {Action1} from './functors';
-import {
-  EventConnected,
-  EventConnectionError,
-  EventDisconnected,
-  EventMessage,
-  DefaultSessionStorageKeyPrefix,
-} from './const';
+import {EventConnected, EventConnectionError, EventDisconnected, EventMessage, DefaultSessionStorageKeyPrefix} from './const';
 import {ClientMessage} from './client-message';
 
-export class SessionStorageTransport
-  extends EventEmitter
-  implements AbstractTransport
-{
+export class SessionStorageTransport extends EventEmitter implements AbstractTransport {
   static isSupported() {
     return !!localStorage;
   }
@@ -46,8 +37,7 @@ export class SessionStorageTransport
     this.on(EventMessage, callback);
   }
 
-  private nativeStorageEvent: ((this: Window, ev: StorageEvent) => any) | null =
-    null;
+  private nativeStorageEvent: ((this: Window, ev: StorageEvent) => any) | null = null;
   private clientId: number = 0;
   private keyPrefix: string = DefaultSessionStorageKeyPrefix;
   isConnected: boolean = false;
@@ -56,8 +46,7 @@ export class SessionStorageTransport
     if (!SessionStorageTransport.isSupported()) {
       return this.failNotSupported();
     }
-    this.keyPrefix =
-      options?.sessionStorageKeyPrefix || DefaultSessionStorageKeyPrefix;
+    this.keyPrefix = options?.sessionStorageKeyPrefix || DefaultSessionStorageKeyPrefix;
     const clients = this.getClientIds(this.keyPrefix);
     this.clientId = this.generateId(clients);
     this.addClientId(clients, this.clientId);
@@ -116,17 +105,10 @@ export class SessionStorageTransport
   }
 
   private isAllClients(msgClients: number[], allClients: number[]) {
-    return (
-      msgClients.length === allClients.length &&
-      allClients.some((r) => msgClients.indexOf(r) >= 0)
-    );
+    return msgClients.length === allClients.length && allClients.some((r) => msgClients.indexOf(r) >= 0);
   }
 
-  private removeObsoleteMessages(
-    msgClients: number[],
-    key: string,
-    msgObject: ClientMessage,
-  ) {
+  private removeObsoleteMessages(msgClients: number[], key: string, msgObject: ClientMessage) {
     const clients = this.getClientIds(this.keyPrefix);
     if (this.isAllClients(msgClients, clients)) {
       localStorage.removeItem(key);
@@ -202,10 +184,7 @@ export class SessionStorageTransport
       message,
     };
 
-    localStorage.setItem(
-      `${this.keyPrefix}_msg_${+new Date()}`,
-      JSON.stringify(msgObject),
-    );
+    localStorage.setItem(`${this.keyPrefix}_msg_${+new Date()}`, JSON.stringify(msgObject));
     localStorage.setItem(this.keyPrefix, new Date().toUTCString());
   }
 }
