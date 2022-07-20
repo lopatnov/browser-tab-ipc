@@ -3,7 +3,6 @@ $(function () {
 
   function connect(transportTypes) {
     const ipcUrl = document.getElementById('workerUrl').value;
-    browserTabIpc.BrowserTabIPC.defaultWorkerUri = ipcUrl;
 
     ipc = new browserTabIpc.BrowserTabIPC({
       transportTypes: transportTypes,
@@ -14,13 +13,15 @@ $(function () {
     });
 
     ipc
-      .connect()
+      .connect({
+        sharedWorkerUri: ipcUrl,
+      })
       .then(function (e) {
         $('#history').append($('<li>').html(`Connected: ${e.connected}`));
       })
       .catch(function (e) {
         console.error(e);
-        $('#history').append($('<li>').html(`Connection Error: ${JSON.stringify(e)}`));
+        $('#history').append($('<li>').html(`<pre>Connection Error: \n${JSON.stringify(e).replace(/\\n/g, '\n')}</pre>`));
       });
   }
 

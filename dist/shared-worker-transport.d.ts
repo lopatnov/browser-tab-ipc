@@ -18,6 +18,14 @@ export declare class SharedWorkerTransport extends EventEmitter implements Abstr
     connect(options?: ConnectionOptions): Promise<ConnectionState>;
     private getConnectionState;
     private createWorker;
+    private buildWorker;
     disconnect(): Promise<ConnectionState>;
     postMessage(message: any): Promise<void>;
+}
+declare global {
+    interface Window {
+        BlobBuilder: any;
+        WebKitBlobBuilder: any;
+        MozBlobBuilder: any;
+    }
 }

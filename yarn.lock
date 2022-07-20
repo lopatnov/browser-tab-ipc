@@ -1194,10 +1194,10 @@
     "@types/yargs" "^16.0.0"
     chalk "^4.0.0"
 
-"@lopatnov/express-reverse-proxy@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@lopatnov/express-reverse-proxy/-/express-reverse-proxy-1.1.1.tgz#47e21160586f4d1fc8f44ffb5edb45a96ccd5086"
-  integrity sha512-SENaUFLmDXGr958Vf9q744hCiiIzXRYg1ERhbzkZtRiUI4hlxa3hPQRK3bCHeHjEEUiErP/QqUNWOum3Fwi5Vg==
+"@lopatnov/express-reverse-proxy@^1.2.0":
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/@lopatnov/express-reverse-proxy/-/express-reverse-proxy-1.2.0.tgz#657170f280e2843eb16a10b215a6f7ea00452ffc"
+  integrity sha512-n7b4M3G2LwCYT2dr4BA1vnpAvCnbeUYK8O/pbpHalzZz4Su7yl24xCuT1RuoEAeCxL6hBGUUZaYKYqAsco5Wog==
   dependencies:
     express "^4.17.1"
     express-http-proxy "^1.6.3"

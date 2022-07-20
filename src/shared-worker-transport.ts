@@ -47,13 +47,14 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
       if (state.connected) {
         addEventListener('beforeunload', () => this.disconnect());
         this.onConnected(state);
+        return state;
       }
     } catch (ex: any) {
       state = this.getConnectionState();
       state.error = ex;
       this.onConnectionError(state);
     }
-    return state;
+    throw state;
   }
 
   private getConnectionState(): ConnectionState {
@@ -63,11 +64,31 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
   }
 
   private createWorker(options?: ConnectionOptions) {
-    const worker = new SharedWorker(options?.sharedWorkerUri || BrowserTabIPC.defaultWorkerUri);
+    const worker = this.buildWorker(options?.sharedWorkerUri || BrowserTabIPC.defaultWorkerUri);
     worker.port.onmessage = (ev) => {
       this.onMessage(ev.data.message);
     };
     worker.port.start();
+    return worker;
+  }
+
+  private buildWorker(workerUrl: string) {
+    let worker: SharedWorker;
+    try {
+      worker = new SharedWorker(workerUrl);
+    } catch (e) {
+      let blob: Blob;
+      try {
+        blob = new Blob(["importScripts('" + workerUrl + "');"], {type: 'application/javascript'});
+      } catch (e1) {
+        const blobBuilder = new (window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder)();
+        blobBuilder.append(`importScripts('${workerUrl}');`);
+        blob = blobBuilder.getBlob('application/javascript');
+      }
+      const url = window.URL || window.webkitURL;
+      const blobUrl = url.createObjectURL(blob);
+      worker = new SharedWorker(blobUrl);
+    }
     return worker;
   }
 
@@ -92,5 +113,14 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
       cmd: 'm',
       message,
     });
+  }
+}
+
+declare global {
+  // eslint-disable-next-line no-unused-vars
+  interface Window {
+    BlobBuilder: any;
+    WebKitBlobBuilder: any;
+    MozBlobBuilder: any;
   }
 }

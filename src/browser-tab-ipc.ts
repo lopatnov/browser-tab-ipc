@@ -9,7 +9,7 @@ import {SessionStorageTransport} from './session-storage-transport';
 import {IpcOptions} from './ipc-options';
 import {EventConnected, EventConnectionError, EventDisconnected, EventMessage} from './const';
 export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
-  public static defaultWorkerUri = 'https://lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
+  public static defaultWorkerUri = '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
   private transportTypes!: TransportType[];
   private transport?: AbstractTransport;
 

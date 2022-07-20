@@ -1,6 +1,6 @@
 {
   "name": "@lopatnov/browser-tab-ipc",
-  "version": "0.2.0-beta",
+  "version": "0.2.1-beta",
   "license": "Apache-2.0",
   "author": "lopatnov",
   "description": "Inter-process communication mechanism between browser tabs. A bus network between browser tabs.",
@@ -52,7 +52,7 @@
     "@babel/preset-env": "^7.16.0",
     "@babel/preset-typescript": "^7.16.0",
     "@lopatnov/rollup-plugin-uglify": "^2.1.1",
-    "@lopatnov/express-reverse-proxy": "^1.1.1",
+    "@lopatnov/express-reverse-proxy": "^1.2.0",
     "@types/jest": "^27.0.2",
     "@types/puppeteer": "^5.4.4",
     "@typescript-eslint/eslint-plugin": "^5.3.1",

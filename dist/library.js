@@ -605,6 +605,7 @@
                       if (state.connected) {
                           addEventListener('beforeunload', function () { return _this.disconnect(); });
                           this.onConnected(state);
+                          return [2 /*return*/, state];
                       }
                   }
                   catch (ex) {
@@ -612,7 +613,7 @@
                       state.error = ex;
                       this.onConnectionError(state);
                   }
-                  return [2 /*return*/, state];
+                  throw state;
               });
           });
       };
@@ -624,11 +625,32 @@
       };
       SharedWorkerTransport.prototype.createWorker = function (options) {
           var _this = this;
-          var worker = new SharedWorker((options === null || options === void 0 ? void 0 : options.sharedWorkerUri) || BrowserTabIPC.defaultWorkerUri);
+          var worker = this.buildWorker((options === null || options === void 0 ? void 0 : options.sharedWorkerUri) || BrowserTabIPC.defaultWorkerUri);
           worker.port.onmessage = function (ev) {
               _this.onMessage(ev.data.message);
           };
           worker.port.start();
+          return worker;
+      };
+      SharedWorkerTransport.prototype.buildWorker = function (workerUrl) {
+          var worker;
+          try {
+              worker = new SharedWorker(workerUrl);
+          }
+          catch (e) {
+              var blob = void 0;
+              try {
+                  blob = new Blob(["importScripts('" + workerUrl + "');"], { type: 'application/javascript' });
+              }
+              catch (e1) {
+                  var blobBuilder = new (window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder)();
+                  blobBuilder.append("importScripts('" + workerUrl + "');");
+                  blob = blobBuilder.getBlob('application/javascript');
+              }
+              var url = window.URL || window.webkitURL;
+              var blobUrl = url.createObjectURL(blob);
+              worker = new SharedWorker(blobUrl);
+          }
           return worker;
       };
       SharedWorkerTransport.prototype.disconnect = function () {
@@ -951,7 +973,7 @@
           }
           return this.transport.postMessage(message);
       };
-      BrowserTabIPC.defaultWorkerUri = 'https://lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
+      BrowserTabIPC.defaultWorkerUri = '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
       return BrowserTabIPC;
   }(events));
 
