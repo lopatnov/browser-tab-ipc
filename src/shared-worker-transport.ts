@@ -6,7 +6,7 @@ import {Action1} from './functors';
 import {EventConnected, EventConnectionError, EventDisconnected, EventMessage} from './const';
 
 export class SharedWorkerTransport extends EventEmitter implements AbstractTransport {
-  public static defaultUri = '/dist/ipc-worker.js';
+  public static defaultUri = 'https://lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
   static isSupported() {
     return !!window.SharedWorker;
   }
