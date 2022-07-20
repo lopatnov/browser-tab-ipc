@@ -1,3 +1,4 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:02f4859d2f6ea6ab9b4a9d6ff5880ac899bca71de2c51df7c9e4fe8f2d391114
-size 267
+export { EventConnected, EventConnectionError, EventDisconnected, EventMessage, } from './const';
+export { TransportType } from './transport-type.enum';
+export type { ConnectionState } from './connection-state';
+export { BrowserTabIPC } from './browser-tab-ipc';
