@@ -23,6 +23,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
+      env:
+        PORT: 8080
     - run: yarn install
     - run: npm run build --if-present
     - run: npm test
