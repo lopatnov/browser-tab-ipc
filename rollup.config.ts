@@ -1,10 +1,10 @@
-import json from "rollup-plugin-json";
-import typescript from "rollup-plugin-typescript2";
-import commonjs from "rollup-plugin-commonjs";
-import resolve from "rollup-plugin-node-resolve";
-import uglify from "@lopatnov/rollup-plugin-uglify";
+import json from 'rollup-plugin-json';
+import typescript from 'rollup-plugin-typescript2';
+import commonjs from 'rollup-plugin-commonjs';
+import resolve from 'rollup-plugin-node-resolve';
+import uglify from '@lopatnov/rollup-plugin-uglify';
 
-import pkg from "./package.json";
+import pkg from './package.json';
 
 export default [
   {
@@ -12,49 +12,61 @@ export default [
     output: [
       {
         file: pkg.main,
-        format: "umd",
+        format: 'umd',
         name: pkg.umdName,
-        sourcemap: true
+        sourcemap: true,
       },
       {
         file: pkg.module,
-        format: "es",
-        sourcemap: true
-      }
+        format: 'es',
+        sourcemap: true,
+      },
     ],
-    external: [
-      ...Object.keys(pkg.devDependencies || {}),
-      ...Object.keys(pkg.peerDependencies || {})
-    ],
+    external: [...Object.keys(pkg.devDependencies || {}), ...Object.keys(pkg.peerDependencies || {})],
     plugins: [
       json(),
       typescript({
-        typescript: require("typescript")
+        typescript: require('typescript'),
       }),
       resolve(),
-      commonjs()
-    ]
+      commonjs(),
+    ],
   },
   {
     input: `src/${pkg.libraryFile}.ts`,
     output: {
       file: `dist/${pkg.libraryFile}.min.js`,
       name: pkg.umdName,
-      format: "umd",
-      sourcemap: true
+      format: 'umd',
+      sourcemap: true,
     },
-    external: [
-      ...Object.keys(pkg.devDependencies || {}),
-      ...Object.keys(pkg.peerDependencies || {})
+    external: [...Object.keys(pkg.devDependencies || {}), ...Object.keys(pkg.peerDependencies || {})],
+    plugins: [
+      json(),
+      typescript({
+        typescript: require('typescript'),
+      }),
+      resolve(),
+      commonjs(),
+      uglify(),
+    ],
+  },
+  {
+    input: `src/ipc-worker.ts`,
+    output: [
+      {
+        file: 'dist/ipc-worker.js',
+        format: 'cjs',
+        sourcemap: true,
+      },
     ],
     plugins: [
       json(),
       typescript({
-        typescript: require("typescript")
+        typescript: require('typescript'),
       }),
       resolve(),
       commonjs(),
-      uglify()
-    ]
-  }
+    ],
+  },
 ];

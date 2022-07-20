@@ -1,6 +1,6 @@
 {
   "name": "@lopatnov/browser-tab-ipc",
-  "version": "0.1.0-alpha",
+  "version": "0.2.0-beta",
   "license": "Apache-2.0",
   "author": "lopatnov",
   "description": "Inter-process communication mechanism between browser tabs. A bus network between browser tabs.",
@@ -32,40 +32,56 @@
     "url": "https://github.com/lopatnov/browser-tab-ipc/issues"
   },
   "scripts": {
+    "start": "npm run build && npm run serve",
     "build": "rollup -c rollup.config.ts",
     "watch": "rollup -cw rollup.config.ts",
     "release": "release-it minor",
     "configure-npm": "node ./set-registry.js -s https://registry.npmjs.org",
     "configure-gpr": "node ./set-registry.js -s https://npm.pkg.github.com",
-    "test": "echo jest"
+    "serve": "express-reverse-proxy",
+    "test": "echo \"Unit tests were not added\"",
+    "integration-test": "jest"
   },
   "publishConfig": {
     "access": "public"
   },
   "devDependencies": {
+    "@babel/core": "^7.16.0",
+    "@babel/plugin-proposal-class-properties": "^7.16.0",
+    "@babel/plugin-proposal-object-rest-spread": "^7.16.0",
+    "@babel/preset-env": "^7.16.0",
+    "@babel/preset-typescript": "^7.16.0",
     "@lopatnov/rollup-plugin-uglify": "^2.1.1",
-    "@types/expect-puppeteer": "^4.4.7",
+    "@lopatnov/express-reverse-proxy": "^1.1.1",
     "@types/jest": "^27.0.2",
-    "@types/jest-environment-puppeteer": "^4.4.1",
     "@types/puppeteer": "^5.4.4",
-    "@types/typescript": "^2.0.0",
-    "jest": "^27.3.0",
-    "jest-config": "^27.3.0",
+    "@typescript-eslint/eslint-plugin": "^5.3.1",
+    "@typescript-eslint/parser": "^5.3.1",
+    "babel-jest": "^27.3.1",
+    "eslint": "^8.2.0",
+    "eslint-config-google": "^0.14.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "jest": "^27.3.1",
     "jest-puppeteer": "^6.0.0",
+    "prettier": "2.4.1",
+    "prettier-eslint": "^13.0.0",
+    "puppeteer": "^11.0.0",
+    "puppeteer-core": "^11.0.0",
     "release-it": "^14.11.6",
-    "rollup": "^2.58.0",
+    "rollup": "^2.59.0",
     "rollup-plugin-commonjs": "^10.1.0",
     "rollup-plugin-json": "^4.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-sourcemaps": "^0.6.3",
     "rollup-plugin-typescript2": "^0.30.0",
     "terser": "^5.9.0",
+    "tree-kill": "^1.2.2",
     "ts-jest": "^27.0.7",
+    "ts-node": "^10.4.0",
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "events": "^3.3.0",
-    "expect-puppeteer": "^6.0.0",
-    "jest-environment-puppeteer": "^6.0.0"
+    "events": "^3.3.0"
   }
 }

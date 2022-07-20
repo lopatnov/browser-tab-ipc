@@ -1,9 +1,10 @@
 import EventEmitter from 'events';
-import { AbstractTransport } from './abstract-transport';
-import { ConnectionOptions } from './connection-options';
-import { ConnectionState } from './connection-state';
-import { Action1 } from './functors';
-import { EventConnected, EventConnectionError, EventDisconnected, EventMessage } from './const';
+import {AbstractTransport} from './abstract-transport';
+import {ConnectionOptions} from './connection-options';
+import {ConnectionState} from './connection-state';
+import {Action1} from './functors';
+import {EventConnected, EventConnectionError, EventDisconnected, EventMessage} from './const';
+import {BrowserTabIPC} from './browser-tab-ipc';
 
 export class SharedWorkerTransport extends EventEmitter implements AbstractTransport {
   static isSupported() {
@@ -39,61 +40,57 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
   }
 
   public async connect(options?: ConnectionOptions): Promise<ConnectionState> {
+    let state: ConnectionState;
     try {
-      const code = `(${this.workerScope})(self);`
-      this.worker = this.workerFromString(code);
-      this.worker.port.start();
-      this.worker.port.onmessage = (ev) => {
-        this.onMessage(ev.data.message);
-      };
-      this.onConnected({
-        connected: !!this.worker?.port
-      })
+      this.worker = this.createWorker(options);
+      state = this.getConnectionState();
+      if (state.connected) {
+        addEventListener('beforeunload', () => this.disconnect());
+        this.onConnected(state);
+      }
     } catch (ex: any) {
-      this.onConnectionError({
-        connected: !!this.worker?.port,
-        error: ex.message
-      })
+      state = this.getConnectionState();
+      state.error = ex;
+      this.onConnectionError(state);
     }
-    return {
-      connected: !!this.worker?.port
-    }
+    return state;
   }
 
-  private workerFromString(...textValues: string[]): SharedWorker {
-    const text = textValues.join("");
-    const blob = new Blob([text], { type: "application/javascript" });
-    var worker = new SharedWorker(URL.createObjectURL(blob));
+  private getConnectionState(): ConnectionState {
+    return {
+      connected: !!this.worker?.port,
+    };
+  }
+
+  private createWorker(options?: ConnectionOptions) {
+    const worker = new SharedWorker(options?.sharedWorkerUri || BrowserTabIPC.defaultWorkerUri);
+    worker.port.onmessage = (ev) => {
+      this.onMessage(ev.data.message);
+    };
+    worker.port.start();
     return worker;
   }
 
   public async disconnect(): Promise<ConnectionState> {
-    this.worker?.port.close();
-    this.worker = undefined;
-    this.onDisconnected({
-      connected: !!this.worker
-    })
-    return {
-      connected: !!this.worker
+    if (this.worker) {
+      try {
+        this.worker.port.postMessage({
+          cmd: 'x',
+        });
+      } finally {
+        this.worker?.port.close();
+        this.worker = undefined;
+      }
     }
+    const state = this.getConnectionState();
+    this.onDisconnected(state);
+    return state;
   }
 
   public async postMessage(message: any): Promise<void> {
     this.worker?.port.postMessage({
-      message
-    })
+      cmd: 'm',
+      message,
+    });
   }
-
-  private workerScope(self: SharedWorkerGlobalScope): void {
-    self.onconnect = (e) => {
-      if (e.source !== null) {
-        const port = e.source;
-        port.addEventListener("message", (ev: any) => {
-          port.postMessage(ev.data);
-        }, false);
-        (port as any).start();
-      }
-    }
-  }
-
 }

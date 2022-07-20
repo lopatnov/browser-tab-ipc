@@ -1,7 +1,6 @@
-import { ConnectionOptions } from "./connection-options";
-import { ConnectionState } from "./connection-state";
-import { Action1 } from "./functors";
-
+import {ConnectionOptions} from './connection-options';
+import {ConnectionState} from './connection-state';
+import {Action1} from './functors';
 export interface AbstractTransport {
   /**
    * Connected event. It executes callback after establishing connection

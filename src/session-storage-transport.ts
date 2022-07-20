@@ -1,10 +1,10 @@
 import EventEmitter from 'events';
-import { AbstractTransport } from './abstract-transport';
-import { ConnectionOptions } from './connection-options';
-import { ConnectionState } from './connection-state';
-import { Action1 } from './functors';
-import { EventConnected, EventConnectionError, EventDisconnected, EventMessage, DefaultSessionStorageKeyPrefix } from './const';
-import { ClientMessage } from './client-message';
+import {AbstractTransport} from './abstract-transport';
+import {ConnectionOptions} from './connection-options';
+import {ConnectionState} from './connection-state';
+import {Action1} from './functors';
+import {EventConnected, EventConnectionError, EventDisconnected, EventMessage, DefaultSessionStorageKeyPrefix} from './const';
+import {ClientMessage} from './client-message';
 
 export class SessionStorageTransport extends EventEmitter implements AbstractTransport {
   static isSupported() {
@@ -47,16 +47,16 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
       return this.failNotSupported();
     }
     this.keyPrefix = options?.sessionStorageKeyPrefix || DefaultSessionStorageKeyPrefix;
-    const clients = this.getClientIds(this.keyPrefix)
+    const clients = this.getClientIds(this.keyPrefix);
     this.clientId = this.generateId(clients);
     this.addClientId(clients, this.clientId);
     this.updateClientIds(this.keyPrefix, clients);
-    this.subscribeStorage()
+    this.subscribeStorage();
     this.isConnected = true;
 
     const state: ConnectionState = {
-      connected: this.isConnected
-    }
+      connected: this.isConnected,
+    };
     this.onConnected(state);
     return state;
   }
@@ -64,7 +64,7 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
   private failNotSupported() {
     const state: ConnectionState = {
       connected: false,
-      error: 'Session Storage is not supported'
+      error: 'Session Storage is not supported',
     };
     this.onConnectionError(state);
     return state;
@@ -93,32 +93,33 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
   }
 
   private subscribeStorage() {
-    if (this.nativeStorageEvent)
-      return true;
+    if (this.nativeStorageEvent) return true;
     this.nativeStorageEvent = onstorage;
-    window.addEventListener('storage', e => {
+    window.addEventListener('storage', (e) => {
       if (e.key === this.keyPrefix) {
         this.onlocalStorageChange();
       }
       this.nativeStorageEvent && this.nativeStorageEvent.call(window, e);
     });
-    window.addEventListener("beforeunload", e =>
-      this.disconnect());
+    window.addEventListener('beforeunload', (e) => this.disconnect());
   }
 
   private isAllClients(msgClients: number[], allClients: number[]) {
-    return msgClients.length === allClients.length && allClients.some(r=> msgClients.indexOf(r) >= 0)
+    return msgClients.length === allClients.length && allClients.some((r) => msgClients.indexOf(r) >= 0);
   }
 
   private removeObsoleteMessages(msgClients: number[], key: string, msgObject: ClientMessage) {
-    var clients = this.getClientIds(this.keyPrefix);
+    const clients = this.getClientIds(this.keyPrefix);
     if (this.isAllClients(msgClients, clients)) {
       localStorage.removeItem(key);
     } else {
-      localStorage.setItem(key, JSON.stringify({
-        clients: msgClients,
-        message: msgObject.message
-      }));
+      localStorage.setItem(
+        key,
+        JSON.stringify({
+          clients: msgClients,
+          message: msgObject.message,
+        }),
+      );
     }
   }
 
@@ -143,11 +144,11 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
 
   async disconnect(): Promise<ConnectionState> {
     const state: ConnectionState = {
-      connected: this.isConnected
+      connected: this.isConnected,
     };
     if (!this.isConnected) {
       return {
-        connected: this.isConnected
+        connected: this.isConnected,
       };
     }
     state.connected = this.isConnected = false;
@@ -165,8 +166,7 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
   }
 
   private removeClientId() {
-    if (!this.clientId)
-      return;
+    if (!this.clientId) return;
     const clients = this.getClientIds(this.keyPrefix);
     const index = clients.indexOf(this.clientId);
     if (index > -1) {
@@ -177,12 +177,11 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
   }
 
   async postMessage(message: any): Promise<void> {
-    if (!this.isConnected)
-      return;
+    if (!this.isConnected) return;
 
     const msgObject: ClientMessage = {
       clients: [this.clientId],
-      message
+      message,
     };
 
     localStorage.setItem(`${this.keyPrefix}_msg_${+new Date()}`, JSON.stringify(msgObject));

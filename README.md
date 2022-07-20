@@ -1,4 +1,4 @@
-# @lopatnov/browser-tab-ipc [![Twitter](https://img.shields.io/twitter/url?url=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2F%40lopatnov%2Fbrowser-tab-ipc)](https://twitter.com/intent/tweet?text=I%20want%20to%20share%20TypeScript%20library:&url=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2F%40lopatnov%2Fbrowser-tab-ipc)
+# @lopatnov/browser-tab-ipc [![Twitter](https://img.shields.io/twitter/url?url=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2F%40lopatnov%2Fbrowser-tab-ipc)](https://twitter.com/intent/tweet?text=I%20want%20to%20share%20TypeScript%20library:&url=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2F%40lopatnov%2Fbrowser-tab-ipc) [![LinkedIn](https://img.shields.io/badge/LinkedIn-lopatnov-informational?style=social&logo=linkedin)](https://www.linkedin.com/in/lopatnov/)
 
 [![npm](https://img.shields.io/npm/dt/@lopatnov/browser-tab-ipc)](https://www.npmjs.com/package/@lopatnov/browser-tab-ipc)
 [![NPM version](https://badge.fury.io/js/%40lopatnov%2Fbrowser-tab-ipc.svg)](https://www.npmjs.com/package/@lopatnov/browser-tab-ipc)
@@ -12,11 +12,7 @@
 [![Publish NPM package](https://github.com/lopatnov/browser-tab-ipc/actions/workflows/npm-publish-package.yml/badge.svg)](https://github.com/lopatnov/browser-tab-ipc/releases)
 [![Libraries.io dependency status for latest release](https://img.shields.io/librariesio/release/npm/@lopatnov/browser-tab-ipc)](https://www.npmjs.com/package/@lopatnov/browser-tab-ipc?activeTab=dependencies)
 
-[![Patreon](https://img.shields.io/badge/Donate-Patreon-informational)](https://www.patreon.com/lopatnov)
-[![sobe.ru](https://img.shields.io/static/v1?label=sobe.ru&message=%D0%91%D0%BB%D0%B0%D0%B3%D0%BE%D0%B4%D0%B0%D1%80%D0%BD%D0%BE%D1%81%D1%82%D1%8C&color=yellow&logo=data:image/x-icon;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAAArlBMVEUAAAD//////////////////////////////////////////////////////////////////PP/3l7/9c//0yb/zAD/6ZP/zQf/++7/3FD/88X/0h7//v7/5oX/zATUqQDktgD/5HjQpgAFBACQcwD/zw/fsgCOcQD6yADZrQD2xAD8yQDnuADxwADcsADbrwDpugD3xQD5xwDjtQDywQD+ywD9ygDvvwD7yAD/1jRaObVGAAAAEHRSTlMAA3zg707pEJP8MMUBYN5fiwXJMQAAAAFiS0dEAf8CLd4AAAAHdElNRQflBgMAAxO4O2jCAAAAuElEQVQoz42S1w7CMAxFS8ueYZgNLZuyRynw/z9GdtxIkbgPceQT6Tq2vZwfEKx8wRPyiaViSYDABqQsAMq0OzxUqhbo9kBcavUM6A9AAtJAYDgC0ID7i+t4AghwfxanszlAGBnA/Flc0MfL1doA5s/ChoLtbg8QI392gpIBzf/AwYAWAsdTrIE05/nz5Xq7S6DKpenHM0pe+o/qg5Am74/0ybTkm+q6wG4iltV2LTko52idy+Banx9RYiS6Vrsc3AAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMS0wNi0wM1QwMDowMzoxOCswMDowMLvSSCkAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjEtMDYtMDNUMDA6MDM6MTgrMDA6MDDKj/CVAAAAAElFTkSuQmCC)](https://sobe.ru/na/tech_knigi)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-lopatnov-informational?style=social&logo=linkedin)](https://www.linkedin.com/in/lopatnov/)
-
-Inter-process communication mechanism between browser tabs. A bus network between browser tabs.
+With this technology, you can exchange messages between browser tabs. This is a bus network among browser tabs, inter-process communication mechanism between browser tabs. This technology allows to create a chat between browser tabs. It allows to optimize the performance of high-demand applications, decrease amount of http requests or socket connections.
 
 ## Install
 
@@ -30,6 +26,23 @@ npm install @lopatnov/browser-tab-ipc
 
 ```html
 <script src="https://lopatnov.github.io/browser-tab-ipc/dist/library.min.js"></script>
+
+<!-- Example: how to use in browser -->
+<script>
+  //...
+  ipc = new browserTabIpc.BrowserTabIPC();
+  ipc.message(function (message) {
+    console.log(message);
+  });
+  ipc.connect().then(function (state) {
+    console.log(state);
+  });
+  var id = Math.trunc(Math.random() * 10000);
+  setInterval(() => {
+    ipc.postMessage('Hello browser Tab! I am page with ID: ' + id);
+  }, 200);
+  //...
+</script>
 ```
 
 ## Import package to the project
@@ -37,38 +50,37 @@ npm install @lopatnov/browser-tab-ipc
 ### TypeScript
 
 ```typescript
-import sampleLibrary from "@lopatnov/browser-tab-ipc";
+import {BrowserTabIPC} from '@lopatnov/browser-tab-ipc';
 ```
 
 ### JavaScript
 
 ```javascript
-var sampleLibrary = require("@lopatnov/browser-tab-ipc");
+var library = require('@lopatnov/browser-tab-ipc');
+var BrowserTabIPC = library.BrowserTabIPC;
 ```
 
 ## How to use
 
-```html
-<script src="https://lopatnov.github.io/browser-tab-ipc/dist/library.min.js"></script>
-<script>
-    let ipc = new browserTabIpc.BrowserTabIPC({
-        transportTypes: [browserTabIpc.TransportType.sessionStorage]
-    });
+```ts
+import {BrowserTabIPC} from './../src/browser-tab-ipc';
 
-    ipc.message(function(e){
-        console.log(e);
-    })
+const tabID = Math.trunc(Math.random() * 10000);
+const ipc = new BrowserTabIPC();
 
-    ipc.connect();
+ipc.message(function (message) {
+  console.log(message);
+});
+const state = await ipc.connect();
+console.log(state);
 
-    setTimeout(()=> {
-        ipc.postMessage('Hello');
-    }, 1000);
-</script>
+setInterval(() => {
+  ipc.postMessage('Hello browser Tab! I am page with ID: ' + tabID);
+}, 200);
 ```
 
 ## Rights and Agreements
 
 License [Apache-2.0](https://github.com/lopatnov/browser-tab-ipc/blob/master/LICENSE)
 
-Copyright 2019–2021 Oleksandr Lopatnov
+Copyright 2022 Oleksandr Lopatnov
