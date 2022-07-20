@@ -7,23 +7,23 @@
       port.addEventListener(
         'message',
         (ev: any) => {
-          const message = ev.data;
-          ports.forEach((p) => {
-            if (p !== port) {
-              p.postMessage(message);
-            }
-          });
+          const data = ev.data;
+          const cmd = data?.cmd;
+          switch (cmd) {
+            case 'x':
+              ports.delete(port);
+              break;
+            default:
+              ports.forEach((p) => {
+                if (p !== port) {
+                  p.postMessage(data);
+                }
+              });
+          }
         },
         false,
       );
-      port.addEventListener(
-        'messageerror',
-        (ev: any) => {
-          console.error(ev);
-        },
-        false,
-      );
-      (port as any).start();
+      port.start();
     }
   };
 
@@ -31,3 +31,5 @@
     console.error(e);
   };
 })(self as any);
+
+export {};

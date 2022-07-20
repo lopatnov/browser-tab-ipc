@@ -6,6 +6,7 @@ import {Action1} from './functors';
 import {EventConnected, EventConnectionError, EventDisconnected, EventMessage} from './const';
 
 export class SharedWorkerTransport extends EventEmitter implements AbstractTransport {
+  public static defaultUri = '/dist/ipc-worker.js';
   static isSupported() {
     return !!window.SharedWorker;
   }
@@ -39,72 +40,57 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
   }
 
   public async connect(options?: ConnectionOptions): Promise<ConnectionState> {
+    let state: ConnectionState;
     try {
-      const code = `(${this.workerScope})(self);`;
-      this.worker = this.workerFromString(code);
-      this.worker.port.start();
-      this.worker.port.onmessage = (ev) => {
-        this.onMessage(ev.data.message);
-      };
-      this.onConnected({
-        connected: !!this.worker?.port,
-      });
+      this.worker = this.createWorker(options);
+      state = this.getConnectionState();
+      if (state.connected) {
+        addEventListener('beforeunload', () => this.disconnect());
+        this.onConnected(state);
+      }
     } catch (ex: any) {
-      this.onConnectionError({
-        connected: !!this.worker?.port,
-        error: ex.message,
-      });
+      state = this.getConnectionState();
+      state.error = ex;
+      this.onConnectionError(state);
     }
+    return state;
+  }
+
+  private getConnectionState(): ConnectionState {
     return {
       connected: !!this.worker?.port,
     };
   }
 
-  private workerFromString(...textValues: string[]): SharedWorker {
-    return new SharedWorker('/tests/shared.js');
-    const text = textValues.join('');
-    const blob = new Blob([text], {type: 'application/javascript'});
-    const worker = new SharedWorker(URL.createObjectURL(blob));
+  private createWorker(options?: ConnectionOptions) {
+    const worker = new SharedWorker(options?.sharedWorkerUri || SharedWorkerTransport.defaultUri);
+    worker.port.onmessage = (ev) => {
+      this.onMessage(ev.data.message);
+    };
+    worker.port.start();
     return worker;
   }
 
   public async disconnect(): Promise<ConnectionState> {
-    this.worker?.port.close();
-    this.worker = undefined;
-    this.onDisconnected({
-      connected: !!this.worker,
-    });
-    return {
-      connected: !!this.worker,
-    };
+    if (this.worker) {
+      try {
+        this.worker.port.postMessage({
+          cmd: 'x',
+        });
+      } finally {
+        this.worker?.port.close();
+        this.worker = undefined;
+      }
+    }
+    const state = this.getConnectionState();
+    this.onDisconnected(state);
+    return state;
   }
 
   public async postMessage(message: any): Promise<void> {
     this.worker?.port.postMessage({
+      cmd: 'm',
       message,
     });
-  }
-
-  private workerScope(self: SharedWorkerGlobalScope): void {
-    const ports = new Set<MessagePort>();
-    self.onconnect = (e) => {
-      if (e?.source && e.source instanceof MessagePort) {
-        const port = e.source;
-        ports.add(port);
-        port.addEventListener(
-          'message',
-          (ev: any) => {
-            const message = ev.data;
-            ports.forEach((p) => {
-              if (p !== port) {
-                p.postMessage(message);
-              }
-            });
-          },
-          false,
-        );
-        (port as any).start();
-      }
-    };
   }
 }

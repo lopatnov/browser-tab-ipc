@@ -1,4 +1,4 @@
 export interface ConnectionState {
   connected: boolean;
-  error?: string;
+  error?: any;
 }
