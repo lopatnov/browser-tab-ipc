@@ -27,4 +27,4 @@ jobs:
         PORT: 80
     - run: yarn install
     - run: npm run build --if-present
-    - run: npm test
+    #- run: npm test
