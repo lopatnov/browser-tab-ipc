@@ -4,5 +4,5 @@ services: xvfb
 before_script:
   - yarn install
   - yarn run build
-script:
-  - yarn test
+# script:
+#   - yarn test
