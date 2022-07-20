@@ -39,7 +39,8 @@
     "configure-npm": "node ./set-registry.js -s https://registry.npmjs.org",
     "configure-gpr": "node ./set-registry.js -s https://npm.pkg.github.com",
     "serve": "express-reverse-proxy",
-    "test": "jest"
+    "test": "echo \"Unit tests were not added\"",
+    "integration-test": "jest"
   },
   "publishConfig": {
     "access": "public"
