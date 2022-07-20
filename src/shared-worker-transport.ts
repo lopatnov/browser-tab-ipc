@@ -4,9 +4,9 @@ import {ConnectionOptions} from './connection-options';
 import {ConnectionState} from './connection-state';
 import {Action1} from './functors';
 import {EventConnected, EventConnectionError, EventDisconnected, EventMessage} from './const';
+import {BrowserTabIPC} from './browser-tab-ipc';
 
 export class SharedWorkerTransport extends EventEmitter implements AbstractTransport {
-  public static defaultUri = 'https://lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
   static isSupported() {
     return !!window.SharedWorker;
   }
@@ -63,7 +63,7 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
   }
 
   private createWorker(options?: ConnectionOptions) {
-    const worker = new SharedWorker(options?.sharedWorkerUri || SharedWorkerTransport.defaultUri);
+    const worker = new SharedWorker(options?.sharedWorkerUri || BrowserTabIPC.defaultWorkerUri);
     worker.port.onmessage = (ev) => {
       this.onMessage(ev.data.message);
     };

@@ -2,6 +2,9 @@ $(function () {
   let ipc;
 
   function connect(transportTypes) {
+    const ipcUrl = document.getElementById('workerUrl').value;
+    browserTabIpc.BrowserTabIPC.defaultWorkerUri = ipcUrl;
+
     ipc = new browserTabIpc.BrowserTabIPC({
       transportTypes: transportTypes,
     });

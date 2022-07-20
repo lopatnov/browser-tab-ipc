@@ -16,7 +16,7 @@ describe('Tests', () => {
   beforeAll(async () => {
     cmd = spawn('npm run serve', {cwd: __dirname, shell: true});
     browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
       slowMo: 80,
       timeout: 0,
       args: [`--window-size=${width},${height}`],
@@ -38,6 +38,8 @@ describe('Tests', () => {
   it('should send a message', async () => {
     const message = 'A message from page 1';
 
+    await page1.$eval('#connectBtn', (el) => (el as HTMLElement).click());
+    await page2.$eval('#connectBtn', (el) => (el as HTMLElement).click());
     await page1.evaluate(async () => {
       const anchor = document.querySelector('#text') as HTMLInputElement;
       anchor.value = 'A message from page 1';
