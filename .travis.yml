@@ -1,8 +1,8 @@
 language: node_js
-node_js:
-  - 16
+node_js: node
+services: xvfb
 before_script:
-  - npm install
+  - yarn install
   - npm run build
 script:
   - npm test
