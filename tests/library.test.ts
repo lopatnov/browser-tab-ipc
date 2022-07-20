@@ -9,7 +9,7 @@ describe('Tests', () => {
   let page2: Page;
   const width = 800;
   const height = 600;
-  const url = 'http://localhost:8080/tests/demo.html';
+  const url = 'http://localhost/tests/demo.html';
 
   jest.setTimeout(100000);
 
