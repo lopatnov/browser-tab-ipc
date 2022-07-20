@@ -4,7 +4,7 @@
 
 # Set default behavior to automatically normalize line endings.
 * text=auto
-dist/**/*.* eol=lf filter=lfs diff=lfs merge=lfs -text
+dist/**/*.* binary
 
 LICENSE.txt eol=crlf
 ThirdPartyNotices.txt eol=crlf
