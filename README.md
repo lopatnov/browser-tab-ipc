@@ -34,9 +34,13 @@ npm install @lopatnov/browser-tab-ipc
   ipc.message(function (message) {
     console.log(message);
   });
-  ipc.connect().then(function (state) {
-    console.log(state);
-  });
+  ipc
+    .connect({
+      sharedWorkerUri: '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js', // Please copy this file `dist/ipc-worker.js` to your project and replace this url
+    })
+    .then(function (state) {
+      console.log(state);
+    });
   var id = Math.trunc(Math.random() * 10000);
   setInterval(() => {
     ipc.postMessage('Hello browser Tab! I am page with ID: ' + id);
@@ -71,7 +75,9 @@ const ipc = new BrowserTabIPC();
 ipc.message(function (message) {
   console.log(message);
 });
-const state = await ipc.connect();
+const state = await ipc.connect({
+  sharedWorkerUri: '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js', // Please copy this file `dist/ipc-worker.js` to your project and replace this url
+});
 console.log(state);
 
 setInterval(() => {
