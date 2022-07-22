@@ -6,6 +6,7 @@ import { ConnectionOptions } from './connection-options';
 import { AbstractTransport } from './abstract-transport';
 import { IpcOptions } from './ipc-options';
 export declare class BrowserTabIPC extends EventEmitter implements AbstractTransport {
+    static debug: boolean;
     static defaultWorkerUri: string;
     private transportTypes;
     private transport?;

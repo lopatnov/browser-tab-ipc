@@ -9,7 +9,21 @@ $(function () {
     });
 
     ipc.message(function (e) {
+      console.log('Message:', e);
       $('#history').append($('<li>').html(`<mark class="tertiary">Re:</mark> <span class="re">${e}</span>`));
+    });
+
+    ipc.connected((state) => {
+      console.log('Connected:', state);
+    });
+
+    ipc.connectionError((state) => {
+      console.log('Connection Error:', state);
+    });
+
+    ipc.disconnected((state) => {
+      console.log('Disconnected:', state);
+      $('#history').append($('<li>').html(`Disconnected`));
     });
 
     ipc
@@ -42,10 +56,20 @@ $(function () {
     $('.hidden.browser-chat').removeClass('hidden');
   }
 
+  function hideChat() {
+    $('.options.row').show();
+    $('.browser-chat').addClass('hidden');
+  }
+
   function connectClick() {
     const transportType = getTransportType();
     connect(transportType);
     showChat();
+  }
+
+  function disconnectСlick() {
+    ipc.disconnect();
+    hideChat();
   }
 
   function sendMessage() {
@@ -69,6 +93,7 @@ $(function () {
   }
 
   $('#connectBtn').click(connectClick);
+  $('#disconnectBtn').click(disconnectСlick);
   $('#sendBtn').click(sendClick);
   $('#text').on('keypress', function (e) {
     if (e.which == 13) {

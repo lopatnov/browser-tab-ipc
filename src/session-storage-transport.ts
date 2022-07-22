@@ -5,6 +5,7 @@ import {ConnectionState} from './connection-state';
 import {Action1} from './functors';
 import {EventConnected, EventConnectionError, EventDisconnected, EventMessage, DefaultSessionStorageKeyPrefix} from './const';
 import {ClientMessage} from './client-message';
+import {TransportType} from './transport-type.enum';
 
 export class SessionStorageTransport extends EventEmitter implements AbstractTransport {
   static isSupported() {
@@ -55,6 +56,7 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
     this.isConnected = true;
 
     const state: ConnectionState = {
+      type: TransportType.sessionStorage,
       connected: this.isConnected,
     };
     this.onConnected(state);
@@ -63,6 +65,7 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
 
   private failNotSupported() {
     const state: ConnectionState = {
+      type: TransportType.sessionStorage,
       connected: false,
       error: 'Session Storage is not supported',
     };
@@ -144,10 +147,12 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
 
   async disconnect(): Promise<ConnectionState> {
     const state: ConnectionState = {
+      type: TransportType.sessionStorage,
       connected: this.isConnected,
     };
     if (!this.isConnected) {
       return {
+        type: TransportType.sessionStorage,
         connected: this.isConnected,
       };
     }

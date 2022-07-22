@@ -7,6 +7,7 @@ import { Action1 } from './functors';
 export declare class SharedWorkerTransport extends EventEmitter implements AbstractTransport {
     static isSupported(): boolean;
     private worker;
+    private beforeunloadHandler;
     private onConnected;
     private onConnectionError;
     private onDisconnected;
@@ -15,17 +16,12 @@ export declare class SharedWorkerTransport extends EventEmitter implements Abstr
     connectionError(callback: Action1<ConnectionState>): void;
     disconnected(callback: Action1<ConnectionState>): void;
     message(callback: Action1<any>): void;
+    private throwIfNotSupported;
     connect(options?: ConnectionOptions): Promise<ConnectionState>;
     private getConnectionState;
     private createWorker;
-    private buildWorker;
+    private isFileExists;
+    private startWorker;
     disconnect(): Promise<ConnectionState>;
     postMessage(message: any): Promise<void>;
-}
-declare global {
-    interface Window {
-        BlobBuilder: any;
-        WebKitBlobBuilder: any;
-        MozBlobBuilder: any;
-    }
 }

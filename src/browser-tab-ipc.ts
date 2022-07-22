@@ -9,6 +9,7 @@ import {SessionStorageTransport} from './session-storage-transport';
 import {IpcOptions} from './ipc-options';
 import {EventConnected, EventConnectionError, EventDisconnected, EventMessage} from './const';
 export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
+  public static debug: boolean = false;
   public static defaultWorkerUri = '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
   private transportTypes!: TransportType[];
   private transport?: AbstractTransport;
@@ -63,7 +64,18 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
     if (this.transport !== lastTransport) {
       this.subscribeTransport();
     }
-    return this.transport.connect(options);
+    const state = this.transport.connect(options).catch((error) => {
+      if (
+        this.transport instanceof SharedWorkerTransport &&
+        SessionStorageTransport.isSupported() &&
+        this.transportTypes.indexOf(TransportType.sessionStorage) > -1
+      ) {
+        this.transport = new SessionStorageTransport();
+        return this.connect(options);
+      }
+      throw error;
+    });
+    return state;
   }
 
   private selectTransport(currentValue?: AbstractTransport) {
@@ -83,11 +95,13 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
     const errorMessage = 'Network transport not found';
 
     this.onConnectionError({
+      type: null,
       connected: false,
       error: errorMessage,
     });
 
     const reason: ConnectionState = {
+      type: null,
       error: errorMessage,
       connected: false,
     };
@@ -95,8 +109,13 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   }
 
   public disconnect(): Promise<ConnectionState> {
-    this.unsubscribeEvents();
-    return this.transport?.disconnect() ?? Promise.reject(new Error('Undefined connection'));
+    try {
+      return this.transport?.disconnect() ?? Promise.reject(new Error('Undefined connection'));
+    } catch (error) {
+      return Promise.reject(error);
+    } finally {
+      this.unsubscribeEvents();
+    }
   }
 
   private unsubscribeEvents() {

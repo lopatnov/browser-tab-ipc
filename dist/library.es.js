@@ -559,7 +559,9 @@ events.once = once_1;
 var SharedWorkerTransport = /** @class */ (function (_super) {
     __extends(SharedWorkerTransport, _super);
     function SharedWorkerTransport() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.beforeunloadHandler = function () { return _this.disconnect(); };
+        return _this;
     }
     SharedWorkerTransport.isSupported = function () {
         return !!window.SharedWorker;
@@ -588,70 +590,92 @@ var SharedWorkerTransport = /** @class */ (function (_super) {
     SharedWorkerTransport.prototype.message = function (callback) {
         this.on(EventMessage, callback);
     };
+    SharedWorkerTransport.prototype.throwIfNotSupported = function () {
+        if (!SharedWorkerTransport.isSupported()) {
+            throw new Error('SharedWorker is not supported');
+        }
+    };
     SharedWorkerTransport.prototype.connect = function (options) {
         return __awaiter(this, void 0, void 0, function () {
-            var state;
-            var _this = this;
-            return __generator(this, function (_a) {
-                try {
-                    this.worker = this.createWorker(options);
-                    state = this.getConnectionState();
-                    if (state.connected) {
-                        addEventListener('beforeunload', function () { return _this.disconnect(); });
-                        this.onConnected(state);
-                        return [2 /*return*/, state];
-                    }
+            var state, _a, ex_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _b.trys.push([0, 2, , 3]);
+                        this.throwIfNotSupported();
+                        _a = this;
+                        return [4 /*yield*/, this.createWorker(options)];
+                    case 1:
+                        _a.worker = _b.sent();
+                        this.startWorker(this.worker);
+                        state = this.getConnectionState();
+                        if (state.connected) {
+                            addEventListener('beforeunload', this.beforeunloadHandler);
+                            this.onConnected(state);
+                            return [2 /*return*/, state];
+                        }
+                        return [3 /*break*/, 3];
+                    case 2:
+                        ex_1 = _b.sent();
+                        state = this.getConnectionState();
+                        state.error = ex_1;
+                        this.onConnectionError(state);
+                        return [3 /*break*/, 3];
+                    case 3: throw state;
                 }
-                catch (ex) {
-                    state = this.getConnectionState();
-                    state.error = ex;
-                    this.onConnectionError(state);
-                }
-                throw state;
             });
         });
     };
     SharedWorkerTransport.prototype.getConnectionState = function () {
         var _a;
         return {
+            type: TransportType.sharedWorker,
             connected: !!((_a = this.worker) === null || _a === void 0 ? void 0 : _a.port),
         };
     };
     SharedWorkerTransport.prototype.createWorker = function (options) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, isFileExists;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = (options === null || options === void 0 ? void 0 : options.sharedWorkerUri) || BrowserTabIPC.defaultWorkerUri;
+                        return [4 /*yield*/, this.isFileExists(url)];
+                    case 1:
+                        isFileExists = _a.sent();
+                        if (!isFileExists) {
+                            throw new Error("File " + url + " does not exist");
+                        }
+                        return [2 /*return*/, new SharedWorker(url)];
+                }
+            });
+        });
+    };
+    SharedWorkerTransport.prototype.isFileExists = function (url) {
+        return new Promise(function (resolve) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('HEAD', url);
+            xhr.send();
+            xhr.onload = function () {
+                resolve(xhr.status < 400);
+            };
+            xhr.onerror = function () {
+                resolve(false);
+            };
+        });
+    };
+    SharedWorkerTransport.prototype.startWorker = function (worker) {
         var _this = this;
-        var worker = this.buildWorker((options === null || options === void 0 ? void 0 : options.sharedWorkerUri) || BrowserTabIPC.defaultWorkerUri);
         worker.port.onmessage = function (ev) {
             _this.onMessage(ev.data.message);
         };
         worker.port.start();
-        return worker;
-    };
-    SharedWorkerTransport.prototype.buildWorker = function (workerUrl) {
-        var worker;
-        try {
-            worker = new SharedWorker(workerUrl);
-        }
-        catch (e) {
-            var blob = void 0;
-            try {
-                blob = new Blob(["importScripts('" + workerUrl + "');"], { type: 'application/javascript' });
-            }
-            catch (e1) {
-                var blobBuilder = new (window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder)();
-                blobBuilder.append("importScripts('" + workerUrl + "');");
-                blob = blobBuilder.getBlob('application/javascript');
-            }
-            var url = window.URL || window.webkitURL;
-            var blobUrl = url.createObjectURL(blob);
-            worker = new SharedWorker(blobUrl);
-        }
-        return worker;
     };
     SharedWorkerTransport.prototype.disconnect = function () {
-        var _a;
+        var _a, _b;
         return __awaiter(this, void 0, void 0, function () {
             var state;
-            return __generator(this, function (_b) {
+            return __generator(this, function (_c) {
                 if (this.worker) {
                     try {
                         this.worker.port.postMessage({
@@ -659,9 +683,10 @@ var SharedWorkerTransport = /** @class */ (function (_super) {
                         });
                     }
                     finally {
-                        (_a = this.worker) === null || _a === void 0 ? void 0 : _a.port.close();
+                        (_b = (_a = this.worker) === null || _a === void 0 ? void 0 : _a.port) === null || _b === void 0 ? void 0 : _b.close();
                         this.worker = undefined;
                     }
+                    removeEventListener('beforeunload', this.beforeunloadHandler);
                 }
                 state = this.getConnectionState();
                 this.onDisconnected(state);
@@ -736,6 +761,7 @@ var SessionStorageTransport = /** @class */ (function (_super) {
                 this.subscribeStorage();
                 this.isConnected = true;
                 state = {
+                    type: TransportType.sessionStorage,
                     connected: this.isConnected,
                 };
                 this.onConnected(state);
@@ -745,6 +771,7 @@ var SessionStorageTransport = /** @class */ (function (_super) {
     };
     SessionStorageTransport.prototype.failNotSupported = function () {
         var state = {
+            type: TransportType.sessionStorage,
             connected: false,
             error: 'Session Storage is not supported',
         };
@@ -819,10 +846,12 @@ var SessionStorageTransport = /** @class */ (function (_super) {
             var state;
             return __generator(this, function (_a) {
                 state = {
+                    type: TransportType.sessionStorage,
                     connected: this.isConnected,
                 };
                 if (!this.isConnected) {
                     return [2 /*return*/, {
+                            type: TransportType.sessionStorage,
                             connected: this.isConnected,
                         }];
                 }
@@ -913,6 +942,7 @@ var BrowserTabIPC = /** @class */ (function (_super) {
         }
     };
     BrowserTabIPC.prototype.connect = function (options) {
+        var _this = this;
         var lastTransport = this.transport;
         this.transport = this.selectTransport(this.transport);
         if (!this.transport) {
@@ -921,7 +951,16 @@ var BrowserTabIPC = /** @class */ (function (_super) {
         if (this.transport !== lastTransport) {
             this.subscribeTransport();
         }
-        return this.transport.connect(options);
+        var state = this.transport.connect(options).catch(function (error) {
+            if (_this.transport instanceof SharedWorkerTransport &&
+                SessionStorageTransport.isSupported() &&
+                _this.transportTypes.indexOf(TransportType.sessionStorage) > -1) {
+                _this.transport = new SessionStorageTransport();
+                return _this.connect(options);
+            }
+            throw error;
+        });
+        return state;
     };
     BrowserTabIPC.prototype.selectTransport = function (currentValue) {
         if (!!currentValue)
@@ -941,10 +980,12 @@ var BrowserTabIPC = /** @class */ (function (_super) {
     BrowserTabIPC.prototype.failConnect = function () {
         var errorMessage = 'Network transport not found';
         this.onConnectionError({
+            type: null,
             connected: false,
             error: errorMessage,
         });
         var reason = {
+            type: null,
             error: errorMessage,
             connected: false,
         };
@@ -952,8 +993,15 @@ var BrowserTabIPC = /** @class */ (function (_super) {
     };
     BrowserTabIPC.prototype.disconnect = function () {
         var _a, _b;
-        this.unsubscribeEvents();
-        return (_b = (_a = this.transport) === null || _a === void 0 ? void 0 : _a.disconnect()) !== null && _b !== void 0 ? _b : Promise.reject(new Error('Undefined connection'));
+        try {
+            return (_b = (_a = this.transport) === null || _a === void 0 ? void 0 : _a.disconnect()) !== null && _b !== void 0 ? _b : Promise.reject(new Error('Undefined connection'));
+        }
+        catch (error) {
+            return Promise.reject(error);
+        }
+        finally {
+            this.unsubscribeEvents();
+        }
     };
     BrowserTabIPC.prototype.unsubscribeEvents = function () {
         this.removeAllListeners(EventConnected);
@@ -967,6 +1015,7 @@ var BrowserTabIPC = /** @class */ (function (_super) {
         }
         return this.transport.postMessage(message);
     };
+    BrowserTabIPC.debug = false;
     BrowserTabIPC.defaultWorkerUri = '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
     return BrowserTabIPC;
 }(events));
