@@ -1,3 +1,4 @@
+import {TransportType} from './transport-type.enum';
 import EventEmitter from 'events';
 import {AbstractTransport} from './abstract-transport';
 import {ConnectionOptions} from './connection-options';
@@ -12,6 +13,7 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
   }
 
   private worker: SharedWorker | undefined;
+  private beforeunloadHandler = () => this.disconnect();
 
   private onConnected(state: ConnectionState) {
     this.emit(EventConnected, state);
@@ -39,13 +41,21 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
     this.on(EventMessage, callback);
   }
 
+  private throwIfNotSupported() {
+    if (!SharedWorkerTransport.isSupported()) {
+      throw new Error('SharedWorker is not supported');
+    }
+  }
+
   public async connect(options?: ConnectionOptions): Promise<ConnectionState> {
     let state: ConnectionState;
     try {
-      this.worker = this.createWorker(options);
+      this.throwIfNotSupported();
+      this.worker = await this.createWorker(options);
+      this.startWorker(this.worker);
       state = this.getConnectionState();
       if (state.connected) {
-        addEventListener('beforeunload', () => this.disconnect());
+        addEventListener('beforeunload', this.beforeunloadHandler);
         this.onConnected(state);
         return state;
       }
@@ -59,37 +69,39 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
 
   private getConnectionState(): ConnectionState {
     return {
+      type: TransportType.sharedWorker,
       connected: !!this.worker?.port,
     };
   }
 
-  private createWorker(options?: ConnectionOptions) {
-    const worker = this.buildWorker(options?.sharedWorkerUri || BrowserTabIPC.defaultWorkerUri);
+  private async createWorker(options?: ConnectionOptions) {
+    const url = options?.sharedWorkerUri || BrowserTabIPC.defaultWorkerUri;
+    const isFileExists = await this.isFileExists(url);
+    if (!isFileExists) {
+      throw new Error(`File ${url} does not exist`);
+    }
+    return new SharedWorker(url);
+  }
+
+  private isFileExists(url: string): Promise<boolean> {
+    return new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('HEAD', url);
+      xhr.send();
+      xhr.onload = () => {
+        resolve(xhr.status < 400);
+      };
+      xhr.onerror = () => {
+        resolve(false);
+      };
+    });
+  }
+
+  private startWorker(worker: SharedWorker) {
     worker.port.onmessage = (ev) => {
       this.onMessage(ev.data.message);
     };
     worker.port.start();
-    return worker;
-  }
-
-  private buildWorker(workerUrl: string) {
-    let worker: SharedWorker;
-    try {
-      worker = new SharedWorker(workerUrl);
-    } catch (e) {
-      let blob: Blob;
-      try {
-        blob = new Blob(["importScripts('" + workerUrl + "');"], {type: 'application/javascript'});
-      } catch (e1) {
-        const blobBuilder = new (window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder)();
-        blobBuilder.append(`importScripts('${workerUrl}');`);
-        blob = blobBuilder.getBlob('application/javascript');
-      }
-      const url = window.URL || window.webkitURL;
-      const blobUrl = url.createObjectURL(blob);
-      worker = new SharedWorker(blobUrl);
-    }
-    return worker;
   }
 
   public async disconnect(): Promise<ConnectionState> {
@@ -99,9 +111,10 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
           cmd: 'x',
         });
       } finally {
-        this.worker?.port.close();
+        this.worker?.port?.close();
         this.worker = undefined;
       }
+      removeEventListener('beforeunload', this.beforeunloadHandler);
     }
     const state = this.getConnectionState();
     this.onDisconnected(state);
@@ -113,14 +126,5 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
       cmd: 'm',
       message,
     });
-  }
-}
-
-declare global {
-  // eslint-disable-next-line no-unused-vars
-  interface Window {
-    BlobBuilder: any;
-    WebKitBlobBuilder: any;
-    MozBlobBuilder: any;
   }
 }

@@ -1,4 +1,5 @@
 export interface ConnectionOptions {
-    sessionStorageKeyPrefix?: string;
     sharedWorkerUri?: string;
+    storageKey?: string;
+    storageExpiredTime?: number;
 }

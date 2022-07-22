@@ -1,4 +1,4 @@
 export interface ClientMessage {
-  clients: number[];
+  date: Date;
   message: string;
 }

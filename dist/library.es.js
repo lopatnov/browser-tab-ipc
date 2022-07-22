@@ -2,12 +2,13 @@ var EventConnected = 'connected';
 var EventConnectionError = 'connectionError';
 var EventDisconnected = 'disconnected';
 var EventMessage = 'message';
-var DefaultSessionStorageKeyPrefix = 'ipc';
+var DefaultStorageKeyPrefix = 'ipc';
+var DefaultStorageExpiredTime = 30000;
 
 var TransportType;
 (function (TransportType) {
-    TransportType[TransportType["sessionStorage"] = 0] = "sessionStorage";
-    TransportType[TransportType["sharedWorker"] = 1] = "sharedWorker";
+    TransportType[TransportType["sessionStorage"] = 10] = "sessionStorage";
+    TransportType[TransportType["sharedWorker"] = 20] = "sharedWorker";
 })(TransportType || (TransportType = {}));
 
 /*! *****************************************************************************
@@ -559,7 +560,9 @@ events.once = once_1;
 var SharedWorkerTransport = /** @class */ (function (_super) {
     __extends(SharedWorkerTransport, _super);
     function SharedWorkerTransport() {
-        return _super !== null && _super.apply(this, arguments) || this;
+        var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.beforeunloadHandler = function () { return _this.disconnect(); };
+        return _this;
     }
     SharedWorkerTransport.isSupported = function () {
         return !!window.SharedWorker;
@@ -588,70 +591,92 @@ var SharedWorkerTransport = /** @class */ (function (_super) {
     SharedWorkerTransport.prototype.message = function (callback) {
         this.on(EventMessage, callback);
     };
+    SharedWorkerTransport.prototype.throwIfNotSupported = function () {
+        if (!SharedWorkerTransport.isSupported()) {
+            throw new Error('SharedWorker is not supported');
+        }
+    };
     SharedWorkerTransport.prototype.connect = function (options) {
         return __awaiter(this, void 0, void 0, function () {
-            var state;
-            var _this = this;
-            return __generator(this, function (_a) {
-                try {
-                    this.worker = this.createWorker(options);
-                    state = this.getConnectionState();
-                    if (state.connected) {
-                        addEventListener('beforeunload', function () { return _this.disconnect(); });
-                        this.onConnected(state);
-                        return [2 /*return*/, state];
-                    }
+            var state, _a, ex_1;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _b.trys.push([0, 2, , 3]);
+                        this.throwIfNotSupported();
+                        _a = this;
+                        return [4 /*yield*/, this.createWorker(options)];
+                    case 1:
+                        _a.worker = _b.sent();
+                        this.startWorker(this.worker);
+                        state = this.getConnectionState();
+                        if (state.connected) {
+                            addEventListener('beforeunload', this.beforeunloadHandler);
+                            this.onConnected(state);
+                            return [2 /*return*/, state];
+                        }
+                        return [3 /*break*/, 3];
+                    case 2:
+                        ex_1 = _b.sent();
+                        state = this.getConnectionState();
+                        state.error = ex_1;
+                        this.onConnectionError(state);
+                        return [3 /*break*/, 3];
+                    case 3: throw state;
                 }
-                catch (ex) {
-                    state = this.getConnectionState();
-                    state.error = ex;
-                    this.onConnectionError(state);
-                }
-                throw state;
             });
         });
     };
     SharedWorkerTransport.prototype.getConnectionState = function () {
         var _a;
         return {
+            type: TransportType.sharedWorker,
             connected: !!((_a = this.worker) === null || _a === void 0 ? void 0 : _a.port),
         };
     };
     SharedWorkerTransport.prototype.createWorker = function (options) {
+        return __awaiter(this, void 0, void 0, function () {
+            var url, isFileExists;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        url = (options === null || options === void 0 ? void 0 : options.sharedWorkerUri) || BrowserTabIPC.defaultWorkerUri;
+                        return [4 /*yield*/, this.isFileExists(url)];
+                    case 1:
+                        isFileExists = _a.sent();
+                        if (!isFileExists) {
+                            throw new Error("File " + url + " does not exist");
+                        }
+                        return [2 /*return*/, new SharedWorker(url)];
+                }
+            });
+        });
+    };
+    SharedWorkerTransport.prototype.isFileExists = function (url) {
+        return new Promise(function (resolve) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('HEAD', url);
+            xhr.send();
+            xhr.onload = function () {
+                resolve(xhr.status < 400);
+            };
+            xhr.onerror = function () {
+                resolve(false);
+            };
+        });
+    };
+    SharedWorkerTransport.prototype.startWorker = function (worker) {
         var _this = this;
-        var worker = this.buildWorker((options === null || options === void 0 ? void 0 : options.sharedWorkerUri) || BrowserTabIPC.defaultWorkerUri);
         worker.port.onmessage = function (ev) {
             _this.onMessage(ev.data.message);
         };
         worker.port.start();
-        return worker;
-    };
-    SharedWorkerTransport.prototype.buildWorker = function (workerUrl) {
-        var worker;
-        try {
-            worker = new SharedWorker(workerUrl);
-        }
-        catch (e) {
-            var blob = void 0;
-            try {
-                blob = new Blob(["importScripts('" + workerUrl + "');"], { type: 'application/javascript' });
-            }
-            catch (e1) {
-                var blobBuilder = new (window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder)();
-                blobBuilder.append("importScripts('" + workerUrl + "');");
-                blob = blobBuilder.getBlob('application/javascript');
-            }
-            var url = window.URL || window.webkitURL;
-            var blobUrl = url.createObjectURL(blob);
-            worker = new SharedWorker(blobUrl);
-        }
-        return worker;
     };
     SharedWorkerTransport.prototype.disconnect = function () {
-        var _a;
+        var _a, _b;
         return __awaiter(this, void 0, void 0, function () {
             var state;
-            return __generator(this, function (_b) {
+            return __generator(this, function (_c) {
                 if (this.worker) {
                     try {
                         this.worker.port.postMessage({
@@ -659,9 +684,10 @@ var SharedWorkerTransport = /** @class */ (function (_super) {
                         });
                     }
                     finally {
-                        (_a = this.worker) === null || _a === void 0 ? void 0 : _a.port.close();
+                        (_b = (_a = this.worker) === null || _a === void 0 ? void 0 : _a.port) === null || _b === void 0 ? void 0 : _b.close();
                         this.worker = undefined;
                     }
+                    removeEventListener('beforeunload', this.beforeunloadHandler);
                 }
                 state = this.getConnectionState();
                 this.onDisconnected(state);
@@ -688,10 +714,19 @@ var SessionStorageTransport = /** @class */ (function (_super) {
     __extends(SessionStorageTransport, _super);
     function SessionStorageTransport() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
-        _this.nativeStorageEvent = null;
-        _this.clientId = 0;
-        _this.keyPrefix = DefaultSessionStorageKeyPrefix;
         _this.isConnected = false;
+        _this.keyPrefix = DefaultStorageKeyPrefix;
+        _this.messageTime = new Date(0, 0, 0, 0, 0, 0, 0);
+        _this.messageExpiredTime = DefaultStorageExpiredTime;
+        _this.lastClearTime = new Date(0, 0, 0, 0, 0, 0, 0);
+        _this.maxStorageCleanTime = DefaultStorageExpiredTime * 3;
+        _this.beforeunloadHandler = function () { return _this.disconnect(); };
+        _this.storageHandler = function (e) {
+            var _a;
+            if ((_a = e.key) === null || _a === void 0 ? void 0 : _a.startsWith(_this.keyPrefix)) {
+                _this.onStorageChange();
+            }
+        };
         return _this;
     }
     SessionStorageTransport.isSupported = function () {
@@ -723,149 +758,171 @@ var SessionStorageTransport = /** @class */ (function (_super) {
     };
     SessionStorageTransport.prototype.connect = function (options) {
         return __awaiter(this, void 0, void 0, function () {
-            var clients, state;
+            var state;
             return __generator(this, function (_a) {
-                if (!SessionStorageTransport.isSupported()) {
-                    return [2 /*return*/, this.failNotSupported()];
+                try {
+                    this.throwIfNotSupported();
+                    this.keyPrefix = (options === null || options === void 0 ? void 0 : options.storageKey) || DefaultStorageKeyPrefix;
+                    this.messageExpiredTime = (options === null || options === void 0 ? void 0 : options.storageExpiredTime) || DefaultStorageExpiredTime;
+                    this.maxStorageCleanTime = this.messageExpiredTime * 3;
+                    this.subscribeStorage();
+                    window.addEventListener('beforeunload', this.beforeunloadHandler);
+                    this.messageTime = new Date();
+                    this.isConnected = true;
+                    state = this.getConnectionState();
+                    this.onConnected(state);
                 }
-                this.keyPrefix = (options === null || options === void 0 ? void 0 : options.sessionStorageKeyPrefix) || DefaultSessionStorageKeyPrefix;
-                clients = this.getClientIds(this.keyPrefix);
-                this.clientId = this.generateId(clients);
-                this.addClientId(clients, this.clientId);
-                this.updateClientIds(this.keyPrefix, clients);
-                this.subscribeStorage();
-                this.isConnected = true;
-                state = {
-                    connected: this.isConnected,
-                };
-                this.onConnected(state);
+                catch (ex) {
+                    state = this.getConnectionState();
+                    state.error = ex;
+                    this.onConnectionError(state);
+                    throw state;
+                }
                 return [2 /*return*/, state];
             });
         });
     };
-    SessionStorageTransport.prototype.failNotSupported = function () {
-        var state = {
-            connected: false,
-            error: 'Session Storage is not supported',
+    SessionStorageTransport.prototype.throwIfNotSupported = function () {
+        if (!SessionStorageTransport.isSupported()) {
+            var state = this.getConnectionState();
+            state.error = new Error('Session Storage is not supported');
+            throw state;
+        }
+    };
+    SessionStorageTransport.prototype.getConnectionState = function () {
+        return {
+            type: TransportType.sessionStorage,
+            connected: SessionStorageTransport.isSupported() && this.isConnected,
         };
-        this.onConnectionError(state);
-        return state;
-    };
-    SessionStorageTransport.prototype.getClientIds = function (prefix) {
-        return JSON.parse(localStorage.getItem(prefix + "_clients") || '[]');
-    };
-    SessionStorageTransport.prototype.updateClientIds = function (prefix, clients) {
-        localStorage.setItem(prefix + "_clients", JSON.stringify(clients));
-    };
-    SessionStorageTransport.prototype.addClientId = function (clients, clientId) {
-        clients.push(clientId);
-    };
-    SessionStorageTransport.prototype.generateId = function (clients) {
-        var clientId = this.maxValue(clients);
-        ++clientId;
-        return clientId;
-    };
-    SessionStorageTransport.prototype.maxValue = function (a) {
-        return (a.length && a.reduce(function (p, v) { return (p > v ? p : v); })) || 0;
     };
     SessionStorageTransport.prototype.subscribeStorage = function () {
-        var _this = this;
-        if (this.nativeStorageEvent)
-            return true;
-        this.nativeStorageEvent = onstorage;
-        window.addEventListener('storage', function (e) {
-            if (e.key === _this.keyPrefix) {
-                _this.onlocalStorageChange();
-            }
-            _this.nativeStorageEvent && _this.nativeStorageEvent.call(window, e);
-        });
-        window.addEventListener('beforeunload', function (e) { return _this.disconnect(); });
-    };
-    SessionStorageTransport.prototype.isAllClients = function (msgClients, allClients) {
-        return msgClients.length === allClients.length && allClients.some(function (r) { return msgClients.indexOf(r) >= 0; });
-    };
-    SessionStorageTransport.prototype.removeObsoleteMessages = function (msgClients, key, msgObject) {
-        var clients = this.getClientIds(this.keyPrefix);
-        if (this.isAllClients(msgClients, clients)) {
-            localStorage.removeItem(key);
-        }
-        else {
-            localStorage.setItem(key, JSON.stringify({
-                clients: msgClients,
-                message: msgObject.message,
-            }));
-        }
-    };
-    SessionStorageTransport.prototype.onlocalStorageChange = function () {
-        var msgPrefix = this.keyPrefix + "_msg_";
-        for (var i = 0; i < localStorage.length; i++) {
-            var key = localStorage.key(i);
-            if (key === null || key === void 0 ? void 0 : key.startsWith(msgPrefix)) {
-                var value = localStorage.getItem(key);
-                if (value) {
-                    var msgObject = JSON.parse(value);
-                    var msgClients = msgObject.clients;
-                    if (msgClients.indexOf(this.clientId) === -1) {
-                        msgClients.push(this.clientId);
-                        this.removeObsoleteMessages(msgClients, key, msgObject);
-                        this.onMessage(msgObject.message);
-                    }
-                }
-            }
-        }
+        addEventListener('storage', this.storageHandler);
     };
     SessionStorageTransport.prototype.disconnect = function () {
         return __awaiter(this, void 0, void 0, function () {
             var state;
             return __generator(this, function (_a) {
-                state = {
-                    connected: this.isConnected,
-                };
-                if (!this.isConnected) {
-                    return [2 /*return*/, {
-                            connected: this.isConnected,
-                        }];
-                }
-                state.connected = this.isConnected = false;
-                this.unsubscribeStorage();
-                this.removeClientId();
+                this.clearOldMessages();
+                removeEventListener('beforeunload', this.beforeunloadHandler);
+                removeEventListener('storage', this.storageHandler);
+                this.isConnected = false;
+                state = this.getConnectionState();
                 this.onDisconnected(state);
                 return [2 /*return*/, state];
             });
         });
     };
-    SessionStorageTransport.prototype.unsubscribeStorage = function () {
-        if (this.nativeStorageEvent) {
-            onstorage = this.nativeStorageEvent;
-            this.nativeStorageEvent = null;
-        }
-    };
-    SessionStorageTransport.prototype.removeClientId = function () {
-        if (!this.clientId)
-            return;
-        var clients = this.getClientIds(this.keyPrefix);
-        var index = clients.indexOf(this.clientId);
-        if (index > -1) {
-            clients.splice(index, 1);
-            this.updateClientIds(this.keyPrefix, clients);
-        }
-        this.clientId = 0;
-    };
     SessionStorageTransport.prototype.postMessage = function (message) {
         return __awaiter(this, void 0, void 0, function () {
-            var msgObject;
+            var date;
             return __generator(this, function (_a) {
-                if (!this.isConnected)
-                    return [2 /*return*/];
-                msgObject = {
-                    clients: [this.clientId],
-                    message: message,
-                };
-                localStorage.setItem(this.keyPrefix + "_msg_" + +new Date(), JSON.stringify(msgObject));
-                localStorage.setItem(this.keyPrefix, new Date().toUTCString());
+                switch (_a.label) {
+                    case 0:
+                        if (!this.connected)
+                            return [2 /*return*/];
+                        date = new Date();
+                        this.setMessageItem(message, date);
+                        return [4 /*yield*/, this.runClearOldMessages()];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/];
+                }
+            });
+        });
+    };
+    SessionStorageTransport.prototype.setMessageItem = function (message, date) {
+        var key = this.keyPrefix + "_msg_" + date.getTime();
+        var msgObject = {
+            date: date,
+            message: message,
+        };
+        var value = JSON.stringify(msgObject);
+        this.messageTime = date;
+        localStorage.setItem(key, value);
+    };
+    SessionStorageTransport.prototype.removeItem = function (key) {
+        localStorage.removeItem(key);
+    };
+    SessionStorageTransport.prototype.getKeys = function (prefix) {
+        var keys = [];
+        for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (key === null || key === void 0 ? void 0 : key.startsWith(prefix)) {
+                keys.push(key);
+            }
+        }
+        return keys;
+    };
+    SessionStorageTransport.prototype.clearOldMessages = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var keys;
+            var _this = this;
+            return __generator(this, function (_a) {
+                keys = this.getKeys(this.keyPrefix + "_msg_");
+                keys.forEach(function (key) {
+                    var value = localStorage.getItem(key);
+                    try {
+                        if (value) {
+                            var msgObject = JSON.parse(value);
+                            var now = new Date();
+                            var dateStr = msgObject === null || msgObject === void 0 ? void 0 : msgObject.date;
+                            var date = new Date(dateStr);
+                            if (!date || now.getTime() - date.getTime() > _this.messageExpiredTime) {
+                                _this.removeItem(key);
+                            }
+                        }
+                        else {
+                            _this.removeItem(key);
+                        }
+                    }
+                    finally {
+                    }
+                });
+                this.lastClearTime = new Date();
                 return [2 /*return*/];
             });
         });
+    };
+    SessionStorageTransport.prototype.runClearOldMessages = function () {
+        var _this = this;
+        if (this.clearOldMessagesTimeout) {
+            clearTimeout(this.clearOldMessagesTimeout);
+        }
+        var now = new Date();
+        if (now.getTime() - this.lastClearTime.getTime() > this.maxStorageCleanTime) {
+            this.clearOldMessages();
+        }
+        else {
+            this.clearOldMessagesTimeout = setTimeout(function () { return _this.clearOldMessages(); }, this.messageExpiredTime);
+        }
+    };
+    SessionStorageTransport.prototype.onStorageChange = function () {
+        var _this = this;
+        var keys = this.getKeys(this.keyPrefix + "_msg_");
+        var maxTime = this.messageTime;
+        keys.forEach(function (key) {
+            var value = localStorage.getItem(key);
+            try {
+                if (value) {
+                    var msgObject = JSON.parse(value);
+                    var dateStr = msgObject === null || msgObject === void 0 ? void 0 : msgObject.date;
+                    var date = new Date(dateStr);
+                    if (date > _this.messageTime) {
+                        _this.onMessage(msgObject.message);
+                        if (date > maxTime) {
+                            maxTime = date;
+                        }
+                    }
+                }
+                else {
+                    _this.removeItem(key);
+                }
+            }
+            finally {
+            }
+        });
+        this.messageTime = maxTime;
+        this.runClearOldMessages();
     };
     return SessionStorageTransport;
 }(events));
@@ -913,6 +970,7 @@ var BrowserTabIPC = /** @class */ (function (_super) {
         }
     };
     BrowserTabIPC.prototype.connect = function (options) {
+        var _this = this;
         var lastTransport = this.transport;
         this.transport = this.selectTransport(this.transport);
         if (!this.transport) {
@@ -921,7 +979,16 @@ var BrowserTabIPC = /** @class */ (function (_super) {
         if (this.transport !== lastTransport) {
             this.subscribeTransport();
         }
-        return this.transport.connect(options);
+        var state = this.transport.connect(options).catch(function (error) {
+            if (_this.transport instanceof SharedWorkerTransport &&
+                SessionStorageTransport.isSupported() &&
+                _this.transportTypes.indexOf(TransportType.sessionStorage) > -1) {
+                _this.transport = new SessionStorageTransport();
+                return _this.connect(options);
+            }
+            throw error;
+        });
+        return state;
     };
     BrowserTabIPC.prototype.selectTransport = function (currentValue) {
         if (!!currentValue)
@@ -941,10 +1008,12 @@ var BrowserTabIPC = /** @class */ (function (_super) {
     BrowserTabIPC.prototype.failConnect = function () {
         var errorMessage = 'Network transport not found';
         this.onConnectionError({
+            type: null,
             connected: false,
             error: errorMessage,
         });
         var reason = {
+            type: null,
             error: errorMessage,
             connected: false,
         };
@@ -952,8 +1021,15 @@ var BrowserTabIPC = /** @class */ (function (_super) {
     };
     BrowserTabIPC.prototype.disconnect = function () {
         var _a, _b;
-        this.unsubscribeEvents();
-        return (_b = (_a = this.transport) === null || _a === void 0 ? void 0 : _a.disconnect()) !== null && _b !== void 0 ? _b : Promise.reject(new Error('Undefined connection'));
+        try {
+            return (_b = (_a = this.transport) === null || _a === void 0 ? void 0 : _a.disconnect()) !== null && _b !== void 0 ? _b : Promise.reject(new Error('Undefined connection'));
+        }
+        catch (error) {
+            return Promise.reject(error);
+        }
+        finally {
+            this.unsubscribeEvents();
+        }
     };
     BrowserTabIPC.prototype.unsubscribeEvents = function () {
         this.removeAllListeners(EventConnected);

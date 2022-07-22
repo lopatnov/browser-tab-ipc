@@ -67,7 +67,7 @@ var BrowserTabIPC = library.BrowserTabIPC;
 ## How to use
 
 ```ts
-import {BrowserTabIPC} from './../src/browser-tab-ipc';
+import {BrowserTabIPC} from '@lopatnov/browser-tab-ipc';
 
 const tabID = Math.trunc(Math.random() * 10000);
 const ipc = new BrowserTabIPC();
