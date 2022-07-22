@@ -1,4 +1,4 @@
 export enum TransportType {
-  sessionStorage,
-  sharedWorker,
+  sessionStorage = 10,
+  sharedWorker = 20,
 }

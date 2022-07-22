@@ -8,12 +8,13 @@
   var EventConnectionError = 'connectionError';
   var EventDisconnected = 'disconnected';
   var EventMessage = 'message';
-  var DefaultSessionStorageKeyPrefix = 'ipc';
+  var DefaultStorageKeyPrefix = 'ipc';
+  var DefaultStorageExpiredTime = 30000;
 
   exports.TransportType = void 0;
   (function (TransportType) {
-      TransportType[TransportType["sessionStorage"] = 0] = "sessionStorage";
-      TransportType[TransportType["sharedWorker"] = 1] = "sharedWorker";
+      TransportType[TransportType["sessionStorage"] = 10] = "sessionStorage";
+      TransportType[TransportType["sharedWorker"] = 20] = "sharedWorker";
   })(exports.TransportType || (exports.TransportType = {}));
 
   /*! *****************************************************************************
@@ -719,10 +720,19 @@
       __extends(SessionStorageTransport, _super);
       function SessionStorageTransport() {
           var _this = _super !== null && _super.apply(this, arguments) || this;
-          _this.nativeStorageEvent = null;
-          _this.clientId = 0;
-          _this.keyPrefix = DefaultSessionStorageKeyPrefix;
           _this.isConnected = false;
+          _this.keyPrefix = DefaultStorageKeyPrefix;
+          _this.messageTime = new Date(0, 0, 0, 0, 0, 0, 0);
+          _this.messageExpiredTime = DefaultStorageExpiredTime;
+          _this.lastClearTime = new Date(0, 0, 0, 0, 0, 0, 0);
+          _this.maxStorageCleanTime = DefaultStorageExpiredTime * 3;
+          _this.beforeunloadHandler = function () { return _this.disconnect(); };
+          _this.storageHandler = function (e) {
+              var _a;
+              if ((_a = e.key) === null || _a === void 0 ? void 0 : _a.startsWith(_this.keyPrefix)) {
+                  _this.onStorageChange();
+              }
+          };
           return _this;
       }
       SessionStorageTransport.isSupported = function () {
@@ -754,153 +764,171 @@
       };
       SessionStorageTransport.prototype.connect = function (options) {
           return __awaiter(this, void 0, void 0, function () {
-              var clients, state;
+              var state;
               return __generator(this, function (_a) {
-                  if (!SessionStorageTransport.isSupported()) {
-                      return [2 /*return*/, this.failNotSupported()];
+                  try {
+                      this.throwIfNotSupported();
+                      this.keyPrefix = (options === null || options === void 0 ? void 0 : options.storageKey) || DefaultStorageKeyPrefix;
+                      this.messageExpiredTime = (options === null || options === void 0 ? void 0 : options.storageExpiredTime) || DefaultStorageExpiredTime;
+                      this.maxStorageCleanTime = this.messageExpiredTime * 3;
+                      this.subscribeStorage();
+                      window.addEventListener('beforeunload', this.beforeunloadHandler);
+                      this.messageTime = new Date();
+                      this.isConnected = true;
+                      state = this.getConnectionState();
+                      this.onConnected(state);
                   }
-                  this.keyPrefix = (options === null || options === void 0 ? void 0 : options.sessionStorageKeyPrefix) || DefaultSessionStorageKeyPrefix;
-                  clients = this.getClientIds(this.keyPrefix);
-                  this.clientId = this.generateId(clients);
-                  this.addClientId(clients, this.clientId);
-                  this.updateClientIds(this.keyPrefix, clients);
-                  this.subscribeStorage();
-                  this.isConnected = true;
-                  state = {
-                      type: exports.TransportType.sessionStorage,
-                      connected: this.isConnected,
-                  };
-                  this.onConnected(state);
+                  catch (ex) {
+                      state = this.getConnectionState();
+                      state.error = ex;
+                      this.onConnectionError(state);
+                      throw state;
+                  }
                   return [2 /*return*/, state];
               });
           });
       };
-      SessionStorageTransport.prototype.failNotSupported = function () {
-          var state = {
+      SessionStorageTransport.prototype.throwIfNotSupported = function () {
+          if (!SessionStorageTransport.isSupported()) {
+              var state = this.getConnectionState();
+              state.error = new Error('Session Storage is not supported');
+              throw state;
+          }
+      };
+      SessionStorageTransport.prototype.getConnectionState = function () {
+          return {
               type: exports.TransportType.sessionStorage,
-              connected: false,
-              error: 'Session Storage is not supported',
+              connected: SessionStorageTransport.isSupported() && this.isConnected,
           };
-          this.onConnectionError(state);
-          return state;
-      };
-      SessionStorageTransport.prototype.getClientIds = function (prefix) {
-          return JSON.parse(localStorage.getItem(prefix + "_clients") || '[]');
-      };
-      SessionStorageTransport.prototype.updateClientIds = function (prefix, clients) {
-          localStorage.setItem(prefix + "_clients", JSON.stringify(clients));
-      };
-      SessionStorageTransport.prototype.addClientId = function (clients, clientId) {
-          clients.push(clientId);
-      };
-      SessionStorageTransport.prototype.generateId = function (clients) {
-          var clientId = this.maxValue(clients);
-          ++clientId;
-          return clientId;
-      };
-      SessionStorageTransport.prototype.maxValue = function (a) {
-          return (a.length && a.reduce(function (p, v) { return (p > v ? p : v); })) || 0;
       };
       SessionStorageTransport.prototype.subscribeStorage = function () {
-          var _this = this;
-          if (this.nativeStorageEvent)
-              return true;
-          this.nativeStorageEvent = onstorage;
-          window.addEventListener('storage', function (e) {
-              if (e.key === _this.keyPrefix) {
-                  _this.onlocalStorageChange();
-              }
-              _this.nativeStorageEvent && _this.nativeStorageEvent.call(window, e);
-          });
-          window.addEventListener('beforeunload', function (e) { return _this.disconnect(); });
-      };
-      SessionStorageTransport.prototype.isAllClients = function (msgClients, allClients) {
-          return msgClients.length === allClients.length && allClients.some(function (r) { return msgClients.indexOf(r) >= 0; });
-      };
-      SessionStorageTransport.prototype.removeObsoleteMessages = function (msgClients, key, msgObject) {
-          var clients = this.getClientIds(this.keyPrefix);
-          if (this.isAllClients(msgClients, clients)) {
-              localStorage.removeItem(key);
-          }
-          else {
-              localStorage.setItem(key, JSON.stringify({
-                  clients: msgClients,
-                  message: msgObject.message,
-              }));
-          }
-      };
-      SessionStorageTransport.prototype.onlocalStorageChange = function () {
-          var msgPrefix = this.keyPrefix + "_msg_";
-          for (var i = 0; i < localStorage.length; i++) {
-              var key = localStorage.key(i);
-              if (key === null || key === void 0 ? void 0 : key.startsWith(msgPrefix)) {
-                  var value = localStorage.getItem(key);
-                  if (value) {
-                      var msgObject = JSON.parse(value);
-                      var msgClients = msgObject.clients;
-                      if (msgClients.indexOf(this.clientId) === -1) {
-                          msgClients.push(this.clientId);
-                          this.removeObsoleteMessages(msgClients, key, msgObject);
-                          this.onMessage(msgObject.message);
-                      }
-                  }
-              }
-          }
+          addEventListener('storage', this.storageHandler);
       };
       SessionStorageTransport.prototype.disconnect = function () {
           return __awaiter(this, void 0, void 0, function () {
               var state;
               return __generator(this, function (_a) {
-                  state = {
-                      type: exports.TransportType.sessionStorage,
-                      connected: this.isConnected,
-                  };
-                  if (!this.isConnected) {
-                      return [2 /*return*/, {
-                              type: exports.TransportType.sessionStorage,
-                              connected: this.isConnected,
-                          }];
-                  }
-                  state.connected = this.isConnected = false;
-                  this.unsubscribeStorage();
-                  this.removeClientId();
+                  this.clearOldMessages();
+                  removeEventListener('beforeunload', this.beforeunloadHandler);
+                  removeEventListener('storage', this.storageHandler);
+                  this.isConnected = false;
+                  state = this.getConnectionState();
                   this.onDisconnected(state);
                   return [2 /*return*/, state];
               });
           });
       };
-      SessionStorageTransport.prototype.unsubscribeStorage = function () {
-          if (this.nativeStorageEvent) {
-              onstorage = this.nativeStorageEvent;
-              this.nativeStorageEvent = null;
-          }
-      };
-      SessionStorageTransport.prototype.removeClientId = function () {
-          if (!this.clientId)
-              return;
-          var clients = this.getClientIds(this.keyPrefix);
-          var index = clients.indexOf(this.clientId);
-          if (index > -1) {
-              clients.splice(index, 1);
-              this.updateClientIds(this.keyPrefix, clients);
-          }
-          this.clientId = 0;
-      };
       SessionStorageTransport.prototype.postMessage = function (message) {
           return __awaiter(this, void 0, void 0, function () {
-              var msgObject;
+              var date;
               return __generator(this, function (_a) {
-                  if (!this.isConnected)
-                      return [2 /*return*/];
-                  msgObject = {
-                      clients: [this.clientId],
-                      message: message,
-                  };
-                  localStorage.setItem(this.keyPrefix + "_msg_" + +new Date(), JSON.stringify(msgObject));
-                  localStorage.setItem(this.keyPrefix, new Date().toUTCString());
+                  switch (_a.label) {
+                      case 0:
+                          if (!this.connected)
+                              return [2 /*return*/];
+                          date = new Date();
+                          this.setMessageItem(message, date);
+                          return [4 /*yield*/, this.runClearOldMessages()];
+                      case 1:
+                          _a.sent();
+                          return [2 /*return*/];
+                  }
+              });
+          });
+      };
+      SessionStorageTransport.prototype.setMessageItem = function (message, date) {
+          var key = this.keyPrefix + "_msg_" + date.getTime();
+          var msgObject = {
+              date: date,
+              message: message,
+          };
+          var value = JSON.stringify(msgObject);
+          this.messageTime = date;
+          localStorage.setItem(key, value);
+      };
+      SessionStorageTransport.prototype.removeItem = function (key) {
+          localStorage.removeItem(key);
+      };
+      SessionStorageTransport.prototype.getKeys = function (prefix) {
+          var keys = [];
+          for (var i = 0; i < localStorage.length; i++) {
+              var key = localStorage.key(i);
+              if (key === null || key === void 0 ? void 0 : key.startsWith(prefix)) {
+                  keys.push(key);
+              }
+          }
+          return keys;
+      };
+      SessionStorageTransport.prototype.clearOldMessages = function () {
+          return __awaiter(this, void 0, void 0, function () {
+              var keys;
+              var _this = this;
+              return __generator(this, function (_a) {
+                  keys = this.getKeys(this.keyPrefix + "_msg_");
+                  keys.forEach(function (key) {
+                      var value = localStorage.getItem(key);
+                      try {
+                          if (value) {
+                              var msgObject = JSON.parse(value);
+                              var now = new Date();
+                              var dateStr = msgObject === null || msgObject === void 0 ? void 0 : msgObject.date;
+                              var date = new Date(dateStr);
+                              if (!date || now.getTime() - date.getTime() > _this.messageExpiredTime) {
+                                  _this.removeItem(key);
+                              }
+                          }
+                          else {
+                              _this.removeItem(key);
+                          }
+                      }
+                      finally {
+                      }
+                  });
+                  this.lastClearTime = new Date();
                   return [2 /*return*/];
               });
           });
+      };
+      SessionStorageTransport.prototype.runClearOldMessages = function () {
+          var _this = this;
+          if (this.clearOldMessagesTimeout) {
+              clearTimeout(this.clearOldMessagesTimeout);
+          }
+          var now = new Date();
+          if (now.getTime() - this.lastClearTime.getTime() > this.maxStorageCleanTime) {
+              this.clearOldMessages();
+          }
+          else {
+              this.clearOldMessagesTimeout = setTimeout(function () { return _this.clearOldMessages(); }, this.messageExpiredTime);
+          }
+      };
+      SessionStorageTransport.prototype.onStorageChange = function () {
+          var _this = this;
+          var keys = this.getKeys(this.keyPrefix + "_msg_");
+          var maxTime = this.messageTime;
+          keys.forEach(function (key) {
+              var value = localStorage.getItem(key);
+              try {
+                  if (value) {
+                      var msgObject = JSON.parse(value);
+                      var dateStr = msgObject === null || msgObject === void 0 ? void 0 : msgObject.date;
+                      var date = new Date(dateStr);
+                      if (date > _this.messageTime) {
+                          _this.onMessage(msgObject.message);
+                          if (date > maxTime) {
+                              maxTime = date;
+                          }
+                      }
+                  }
+                  else {
+                      _this.removeItem(key);
+                  }
+              }
+              finally {
+              }
+          });
+          this.messageTime = maxTime;
+          this.runClearOldMessages();
       };
       return SessionStorageTransport;
   }(events));
@@ -1021,7 +1049,6 @@
           }
           return this.transport.postMessage(message);
       };
-      BrowserTabIPC.debug = false;
       BrowserTabIPC.defaultWorkerUri = '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
       return BrowserTabIPC;
   }(events));
