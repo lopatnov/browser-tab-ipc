@@ -4,6 +4,7 @@ import { AbstractTransport } from './abstract-transport';
 import { ConnectionOptions } from './connection-options';
 import { ConnectionState } from './connection-state';
 import { Action1 } from './functors';
+import { TransportType } from './transport-type.enum';
 export declare class SessionStorageTransport extends EventEmitter implements AbstractTransport {
     static isSupported(): boolean;
     private isConnected;
@@ -15,6 +16,7 @@ export declare class SessionStorageTransport extends EventEmitter implements Abs
     private maxStorageCleanTime;
     private beforeunloadHandler;
     private storageHandler;
+    get transportType(): TransportType;
     private onConnected;
     private onConnectionError;
     private onDisconnected;

@@ -44,6 +44,10 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
     this.transportTypes = this.initTransportTypes(options);
   }
 
+  get transportType(): TransportType | undefined {
+    return this.transport?.transportType;
+  }
+
   private initTransportTypes(options?: IpcOptions) {
     if (!options?.transportTypes) {
       return [TransportType.sharedWorker, TransportType.sessionStorage];
@@ -69,7 +73,9 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
         SessionStorageTransport.isSupported() &&
         this.transportTypes.indexOf(TransportType.sessionStorage) > -1
       ) {
+        this.unsubscribeTransport();
         this.transport = new SessionStorageTransport();
+        this.subscribeTransport();
         return this.connect(options);
       }
       throw error;
@@ -88,6 +94,13 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
     this.transport!.connectionError((state) => this.onConnectionError(state));
     this.transport!.disconnected((state) => this.onDisconnected(state));
     this.transport!.message((content) => this.onMessage(content));
+  }
+
+  private unsubscribeTransport() {
+    this.transport!.removeAllListeners(EventConnected);
+    this.transport!.removeAllListeners(EventConnectionError);
+    this.transport!.removeAllListeners(EventDisconnected);
+    this.transport!.removeAllListeners(EventMessage);
   }
 
   private failConnect() {
@@ -118,6 +131,7 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   }
 
   private unsubscribeEvents() {
+    console.log('unsubscribeTransport ', this.transport);
     this.removeAllListeners(EventConnected);
     this.removeAllListeners(EventConnectionError);
     this.removeAllListeners(EventDisconnected);

@@ -67,7 +67,7 @@ $(function () {
     showChat();
   }
 
-  function disconnectСlick() {
+  function disconnectClick() {
     ipc.disconnect();
     hideChat();
   }
@@ -93,7 +93,7 @@ $(function () {
   }
 
   $('#connectBtn').click(connectClick);
-  $('#disconnectBtn').click(disconnectСlick);
+  $('#disconnectBtn').click(disconnectClick);
   $('#sendBtn').click(sendClick);
   $('#text').on('keypress', function (e) {
     if (e.which == 13) {

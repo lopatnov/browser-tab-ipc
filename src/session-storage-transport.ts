@@ -26,6 +26,10 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
     }
   };
 
+  get transportType() {
+    return TransportType.sessionStorage;
+  }
+
   private onConnected(state: ConnectionState) {
     this.emit(EventConnected, state);
   }
@@ -84,7 +88,7 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
 
   private getConnectionState(): ConnectionState {
     return {
-      type: TransportType.sessionStorage,
+      type: this.transportType,
       connected: SessionStorageTransport.isSupported() && this.isConnected,
     };
   }
