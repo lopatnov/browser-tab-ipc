@@ -567,6 +567,13 @@ var SharedWorkerTransport = /** @class */ (function (_super) {
     SharedWorkerTransport.isSupported = function () {
         return !!window.SharedWorker;
     };
+    Object.defineProperty(SharedWorkerTransport.prototype, "transportType", {
+        get: function () {
+            return TransportType.sharedWorker;
+        },
+        enumerable: false,
+        configurable: true
+    });
     SharedWorkerTransport.prototype.onConnected = function (state) {
         this.emit(EventConnected, state);
     };
@@ -630,7 +637,7 @@ var SharedWorkerTransport = /** @class */ (function (_super) {
     SharedWorkerTransport.prototype.getConnectionState = function () {
         var _a;
         return {
-            type: TransportType.sharedWorker,
+            type: this.transportType,
             connected: !!((_a = this.worker) === null || _a === void 0 ? void 0 : _a.port),
         };
     };
@@ -732,6 +739,13 @@ var SessionStorageTransport = /** @class */ (function (_super) {
     SessionStorageTransport.isSupported = function () {
         return !!localStorage;
     };
+    Object.defineProperty(SessionStorageTransport.prototype, "transportType", {
+        get: function () {
+            return TransportType.sessionStorage;
+        },
+        enumerable: false,
+        configurable: true
+    });
     SessionStorageTransport.prototype.onConnected = function (state) {
         this.emit(EventConnected, state);
     };
@@ -791,7 +805,7 @@ var SessionStorageTransport = /** @class */ (function (_super) {
     };
     SessionStorageTransport.prototype.getConnectionState = function () {
         return {
-            type: TransportType.sessionStorage,
+            type: this.transportType,
             connected: SessionStorageTransport.isSupported() && this.isConnected,
         };
     };
@@ -958,6 +972,14 @@ var BrowserTabIPC = /** @class */ (function (_super) {
     BrowserTabIPC.prototype.message = function (callback) {
         return this.on(EventMessage, callback);
     };
+    Object.defineProperty(BrowserTabIPC.prototype, "transportType", {
+        get: function () {
+            var _a;
+            return (_a = this.transport) === null || _a === void 0 ? void 0 : _a.transportType;
+        },
+        enumerable: false,
+        configurable: true
+    });
     BrowserTabIPC.prototype.initTransportTypes = function (options) {
         if (!(options === null || options === void 0 ? void 0 : options.transportTypes)) {
             return [TransportType.sharedWorker, TransportType.sessionStorage];
@@ -983,7 +1005,9 @@ var BrowserTabIPC = /** @class */ (function (_super) {
             if (_this.transport instanceof SharedWorkerTransport &&
                 SessionStorageTransport.isSupported() &&
                 _this.transportTypes.indexOf(TransportType.sessionStorage) > -1) {
+                _this.unsubscribeTransport();
                 _this.transport = new SessionStorageTransport();
+                _this.subscribeTransport();
                 return _this.connect(options);
             }
             throw error;
@@ -1004,6 +1028,12 @@ var BrowserTabIPC = /** @class */ (function (_super) {
         this.transport.connectionError(function (state) { return _this.onConnectionError(state); });
         this.transport.disconnected(function (state) { return _this.onDisconnected(state); });
         this.transport.message(function (content) { return _this.onMessage(content); });
+    };
+    BrowserTabIPC.prototype.unsubscribeTransport = function () {
+        this.transport.removeAllListeners(EventConnected);
+        this.transport.removeAllListeners(EventConnectionError);
+        this.transport.removeAllListeners(EventDisconnected);
+        this.transport.removeAllListeners(EventMessage);
     };
     BrowserTabIPC.prototype.failConnect = function () {
         var errorMessage = 'Network transport not found';
@@ -1032,6 +1062,7 @@ var BrowserTabIPC = /** @class */ (function (_super) {
         }
     };
     BrowserTabIPC.prototype.unsubscribeEvents = function () {
+        console.log('unsubscribeTransport ', this.transport);
         this.removeAllListeners(EventConnected);
         this.removeAllListeners(EventConnectionError);
         this.removeAllListeners(EventDisconnected);

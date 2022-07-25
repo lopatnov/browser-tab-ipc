@@ -1,7 +1,10 @@
+import {TransportType} from './transport-type.enum';
 import {ConnectionOptions} from './connection-options';
 import {ConnectionState} from './connection-state';
 import {Action1} from './functors';
-export interface AbstractTransport {
+import EventEmitter from 'events';
+export interface AbstractTransport extends EventEmitter {
+  get transportType(): TransportType | undefined;
   /**
    * Connected event. It executes callback after establishing connection
    * @param callback A function with ConnectionState param

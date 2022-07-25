@@ -1,4 +1,5 @@
 /// <reference types="node" />
+import { TransportType } from './transport-type.enum';
 import EventEmitter from 'events';
 import { AbstractTransport } from './abstract-transport';
 import { ConnectionOptions } from './connection-options';
@@ -8,6 +9,7 @@ export declare class SharedWorkerTransport extends EventEmitter implements Abstr
     static isSupported(): boolean;
     private worker;
     private beforeunloadHandler;
+    get transportType(): TransportType;
     private onConnected;
     private onConnectionError;
     private onDisconnected;

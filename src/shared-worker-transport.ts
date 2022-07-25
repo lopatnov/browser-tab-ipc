@@ -15,6 +15,10 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
   private worker: SharedWorker | undefined;
   private beforeunloadHandler = () => this.disconnect();
 
+  get transportType() {
+    return TransportType.sharedWorker;
+  }
+
   private onConnected(state: ConnectionState) {
     this.emit(EventConnected, state);
   }
@@ -69,7 +73,7 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
 
   private getConnectionState(): ConnectionState {
     return {
-      type: TransportType.sharedWorker,
+      type: this.transportType,
       connected: !!this.worker?.port,
     };
   }

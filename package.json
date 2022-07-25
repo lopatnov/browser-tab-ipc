@@ -1,6 +1,6 @@
 {
   "name": "@lopatnov/browser-tab-ipc",
-  "version": "0.3.0-rc",
+  "version": "1.0.0",
   "license": "Apache-2.0",
   "author": "lopatnov",
   "description": "Inter-process communication mechanism between browser tabs. A bus network between browser tabs.",

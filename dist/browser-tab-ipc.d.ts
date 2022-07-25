@@ -1,4 +1,5 @@
 /// <reference types="node" />
+import { TransportType } from './transport-type.enum';
 import { ConnectionState } from './connection-state';
 import { Action1 } from './functors';
 import EventEmitter from 'events';
@@ -18,10 +19,12 @@ export declare class BrowserTabIPC extends EventEmitter implements AbstractTrans
     disconnected(callback: Action1<ConnectionState>): this;
     message(callback: Action1<any>): this;
     constructor(options?: IpcOptions);
+    get transportType(): TransportType | undefined;
     private initTransportTypes;
     connect(options?: ConnectionOptions): Promise<ConnectionState>;
     private selectTransport;
     private subscribeTransport;
+    private unsubscribeTransport;
     private failConnect;
     disconnect(): Promise<ConnectionState>;
     private unsubscribeEvents;
