@@ -1,44 +1,14 @@
-import EventEmitter from 'events';
-
 import {AbstractTransport} from './abstract-transport';
 import {ConnectionOptions} from './connection-options';
 import {ConnectionState} from './connection-state';
 import {DefaultStorageExpiredTime, DefaultStorageKeyPrefix, EventConnected, EventConnectionError, EventDisconnected, EventMessage} from './const';
-import {Action1} from './functors';
 import {transportFabric} from './transport-fabric';
 import {TransportType} from './transport-type.enum';
 
-export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
+export class BrowserTabIPC extends AbstractTransport {
   public static defaultWorkerUri = '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
   private options: ConnectionOptions = {};
-  private transportTypes!: TransportType[];
   private transport?: AbstractTransport;
-
-  private onConnected(state: ConnectionState) {
-    this.emit(EventConnected, state);
-  }
-  private onConnectionError(state: ConnectionState) {
-    this.emit(EventConnectionError, state);
-  }
-  private onDisconnected(state: ConnectionState) {
-    this.emit(EventDisconnected, state);
-  }
-  private onMessage(state: any) {
-    this.emit(EventMessage, state);
-  }
-
-  public connected(callback: Action1<ConnectionState>) {
-    return this.on(EventConnected, callback);
-  }
-  public connectionError(callback: Action1<ConnectionState>) {
-    return this.on(EventConnectionError, callback);
-  }
-  public disconnected(callback: Action1<ConnectionState>) {
-    return this.on(EventDisconnected, callback);
-  }
-  public message(callback: Action1<any>) {
-    return this.on(EventMessage, callback);
-  }
 
   constructor(options?: ConnectionOptions) {
     super();

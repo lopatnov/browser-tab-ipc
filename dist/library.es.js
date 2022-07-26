@@ -1,16 +1,3 @@
-var EventConnected = 'connected';
-var EventConnectionError = 'connectionError';
-var EventDisconnected = 'disconnected';
-var EventMessage = 'message';
-var DefaultStorageKeyPrefix = 'ipc';
-var DefaultStorageExpiredTime = 30000;
-
-var TransportType;
-(function (TransportType) {
-    TransportType[TransportType["sessionStorage"] = 10] = "sessionStorage";
-    TransportType[TransportType["sharedWorker"] = 20] = "sharedWorker";
-})(TransportType || (TransportType = {}));
-
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation.
 
@@ -568,10 +555,76 @@ function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
 }
 events.once = once_1;
 
+var EventConnected = 'connected';
+var EventConnectionError = 'connectionError';
+var EventDisconnected = 'disconnected';
+var EventMessage = 'message';
+var DefaultStorageKeyPrefix = 'ipc';
+var DefaultStorageExpiredTime = 30000;
+
+var AbstractTransport = /** @class */ (function (_super) {
+    __extends(AbstractTransport, _super);
+    function AbstractTransport() {
+        return _super !== null && _super.apply(this, arguments) || this;
+    }
+    AbstractTransport.prototype.onConnected = function (state) {
+        this.emit(EventConnected, state);
+    };
+    AbstractTransport.prototype.onConnectionError = function (state) {
+        this.emit(EventConnectionError, state);
+    };
+    AbstractTransport.prototype.onDisconnected = function (state) {
+        this.emit(EventDisconnected, state);
+    };
+    AbstractTransport.prototype.onMessage = function (state) {
+        this.emit(EventMessage, state);
+    };
+    /**
+     * Connected event. It executes callback after establishing connection
+     * @param {Action1<ConnectionState>} callback A function with ConnectionState param
+     * @return {this} current object
+     */
+    AbstractTransport.prototype.connected = function (callback) {
+        return this.on(EventConnected, callback);
+    };
+    /**
+     * Connection error event. It executes callback when error occurs.
+     * @param {Action1<ConnectionState>} callback A function with ConnectionState param
+     * @return {this} current object
+     */
+    AbstractTransport.prototype.connectionError = function (callback) {
+        return this.on(EventConnectionError, callback);
+    };
+    /**
+     * Disconnected error event. It executes callback after disconnect
+     * @param {Action1<ConnectionState>} callback A function with ConnectionState param
+     * @return {this} current object
+     */
+    AbstractTransport.prototype.disconnected = function (callback) {
+        return this.on(EventDisconnected, callback);
+    };
+    /**
+     * Received a message event. It executes callback on message.
+     * @param {Action1<any>} callback A function with `any` parameter of received message
+     * @return {AbstractTransport} current object
+     */
+    AbstractTransport.prototype.message = function (callback) {
+        return this.on(EventMessage, callback);
+    };
+    return AbstractTransport;
+}(events));
+
+var TransportType;
+(function (TransportType) {
+    TransportType[TransportType["sessionStorage"] = 10] = "sessionStorage";
+    TransportType[TransportType["sharedWorker"] = 20] = "sharedWorker";
+})(TransportType || (TransportType = {}));
+
 var SessionStorageTransport = /** @class */ (function (_super) {
     __extends(SessionStorageTransport, _super);
     function SessionStorageTransport() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
+        _this.transportType = TransportType.sessionStorage;
         _this.isConnected = false;
         _this.keyPrefix = DefaultStorageKeyPrefix;
         _this.messageTime = new Date(0, 0, 0, 0, 0, 0, 0);
@@ -589,37 +642,6 @@ var SessionStorageTransport = /** @class */ (function (_super) {
     }
     SessionStorageTransport.isSupported = function () {
         return !!localStorage;
-    };
-    Object.defineProperty(SessionStorageTransport.prototype, "transportType", {
-        get: function () {
-            return TransportType.sessionStorage;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    SessionStorageTransport.prototype.onConnected = function (state) {
-        this.emit(EventConnected, state);
-    };
-    SessionStorageTransport.prototype.onConnectionError = function (state) {
-        this.emit(EventConnectionError, state);
-    };
-    SessionStorageTransport.prototype.onDisconnected = function (state) {
-        this.emit(EventDisconnected, state);
-    };
-    SessionStorageTransport.prototype.onMessage = function (state) {
-        this.emit(EventMessage, state);
-    };
-    SessionStorageTransport.prototype.connected = function (callback) {
-        this.on(EventConnected, callback);
-    };
-    SessionStorageTransport.prototype.connectionError = function (callback) {
-        this.on(EventConnectionError, callback);
-    };
-    SessionStorageTransport.prototype.disconnected = function (callback) {
-        this.on(EventDisconnected, callback);
-    };
-    SessionStorageTransport.prototype.message = function (callback) {
-        this.on(EventMessage, callback);
     };
     SessionStorageTransport.prototype.connect = function (options) {
         return __awaiter(this, void 0, void 0, function () {
@@ -790,48 +812,18 @@ var SessionStorageTransport = /** @class */ (function (_super) {
         this.runClearOldMessages();
     };
     return SessionStorageTransport;
-}(events));
+}(AbstractTransport));
 
 var SharedWorkerTransport = /** @class */ (function (_super) {
     __extends(SharedWorkerTransport, _super);
     function SharedWorkerTransport() {
         var _this = _super !== null && _super.apply(this, arguments) || this;
         _this.beforeunloadHandler = function () { return _this.disconnect(); };
+        _this.transportType = TransportType.sharedWorker;
         return _this;
     }
     SharedWorkerTransport.isSupported = function () {
         return !!window.SharedWorker;
-    };
-    Object.defineProperty(SharedWorkerTransport.prototype, "transportType", {
-        get: function () {
-            return TransportType.sharedWorker;
-        },
-        enumerable: false,
-        configurable: true
-    });
-    SharedWorkerTransport.prototype.onConnected = function (state) {
-        this.emit(EventConnected, state);
-    };
-    SharedWorkerTransport.prototype.onConnectionError = function (state) {
-        this.emit(EventConnectionError, state);
-    };
-    SharedWorkerTransport.prototype.onDisconnected = function (state) {
-        this.emit(EventDisconnected, state);
-    };
-    SharedWorkerTransport.prototype.onMessage = function (state) {
-        this.emit(EventMessage, state);
-    };
-    SharedWorkerTransport.prototype.connected = function (callback) {
-        this.on(EventConnected, callback);
-    };
-    SharedWorkerTransport.prototype.connectionError = function (callback) {
-        this.on(EventConnectionError, callback);
-    };
-    SharedWorkerTransport.prototype.disconnected = function (callback) {
-        this.on(EventDisconnected, callback);
-    };
-    SharedWorkerTransport.prototype.message = function (callback) {
-        this.on(EventMessage, callback);
     };
     SharedWorkerTransport.prototype.throwIfNotSupported = function () {
         if (!SharedWorkerTransport.isSupported()) {
@@ -956,7 +948,7 @@ var SharedWorkerTransport = /** @class */ (function (_super) {
         });
     };
     return SharedWorkerTransport;
-}(events));
+}(AbstractTransport));
 
 function transportFabric(transportType) {
     switch (transportType) {
@@ -977,30 +969,6 @@ var BrowserTabIPC = /** @class */ (function (_super) {
         _this.extendOptions(options);
         return _this;
     }
-    BrowserTabIPC.prototype.onConnected = function (state) {
-        this.emit(EventConnected, state);
-    };
-    BrowserTabIPC.prototype.onConnectionError = function (state) {
-        this.emit(EventConnectionError, state);
-    };
-    BrowserTabIPC.prototype.onDisconnected = function (state) {
-        this.emit(EventDisconnected, state);
-    };
-    BrowserTabIPC.prototype.onMessage = function (state) {
-        this.emit(EventMessage, state);
-    };
-    BrowserTabIPC.prototype.connected = function (callback) {
-        return this.on(EventConnected, callback);
-    };
-    BrowserTabIPC.prototype.connectionError = function (callback) {
-        return this.on(EventConnectionError, callback);
-    };
-    BrowserTabIPC.prototype.disconnected = function (callback) {
-        return this.on(EventDisconnected, callback);
-    };
-    BrowserTabIPC.prototype.message = function (callback) {
-        return this.on(EventMessage, callback);
-    };
     Object.defineProperty(BrowserTabIPC.prototype, "transportType", {
         get: function () {
             var _a;
@@ -1100,7 +1068,7 @@ var BrowserTabIPC = /** @class */ (function (_super) {
     };
     BrowserTabIPC.defaultWorkerUri = '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
     return BrowserTabIPC;
-}(events));
+}(AbstractTransport));
 
 export { BrowserTabIPC, EventConnected, EventConnectionError, EventDisconnected, EventMessage, TransportType };
 //# sourceMappingURL=library.es.js.map

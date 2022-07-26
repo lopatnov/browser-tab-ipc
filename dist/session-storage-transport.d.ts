@@ -1,12 +1,10 @@
-/// <reference types="node" />
-import EventEmitter from 'events';
 import { AbstractTransport } from './abstract-transport';
 import { ConnectionOptions } from './connection-options';
 import { ConnectionState } from './connection-state';
-import { Action1 } from './functors';
 import { TransportType } from './transport-type.enum';
-export declare class SessionStorageTransport extends EventEmitter implements AbstractTransport {
+export declare class SessionStorageTransport extends AbstractTransport {
     static isSupported(): boolean;
+    readonly transportType = TransportType.sessionStorage;
     private isConnected;
     private keyPrefix;
     private messageTime;
@@ -16,15 +14,6 @@ export declare class SessionStorageTransport extends EventEmitter implements Abs
     private maxStorageCleanTime;
     private beforeunloadHandler;
     private storageHandler;
-    get transportType(): TransportType;
-    private onConnected;
-    private onConnectionError;
-    private onDisconnected;
-    private onMessage;
-    connected(callback: Action1<ConnectionState>): void;
-    connectionError(callback: Action1<ConnectionState>): void;
-    disconnected(callback: Action1<ConnectionState>): void;
-    message(callback: Action1<any>): void;
     connect(options?: ConnectionOptions | undefined): Promise<ConnectionState>;
     private throwIfNotSupported;
     private getConnectionState;
