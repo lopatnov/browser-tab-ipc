@@ -1,15 +1,16 @@
-import {SharedWorkerTransport} from './shared-worker-transport';
-import {TransportType} from './transport-type.enum';
-import {ConnectionState} from './connection-state';
-import {Action1} from './functors';
 import EventEmitter from 'events';
-import {ConnectionOptions} from './connection-options';
+
 import {AbstractTransport} from './abstract-transport';
-import {SessionStorageTransport} from './session-storage-transport';
-import {IpcOptions} from './ipc-options';
-import {EventConnected, EventConnectionError, EventDisconnected, EventMessage} from './const';
+import {ConnectionOptions} from './connection-options';
+import {ConnectionState} from './connection-state';
+import {DefaultStorageExpiredTime, DefaultStorageKeyPrefix, EventConnected, EventConnectionError, EventDisconnected, EventMessage} from './const';
+import {Action1} from './functors';
+import {transportFabric} from './transport-fabric';
+import {TransportType} from './transport-type.enum';
+
 export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   public static defaultWorkerUri = '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js';
+  private options: ConnectionOptions = {};
   private transportTypes!: TransportType[];
   private transport?: AbstractTransport;
 
@@ -39,17 +40,25 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
     return this.on(EventMessage, callback);
   }
 
-  constructor(options?: IpcOptions) {
+  constructor(options?: ConnectionOptions) {
     super();
-    this.transportTypes = this.initTransportTypes(options);
+    this.extendOptions(options);
   }
 
   get transportType(): TransportType | undefined {
     return this.transport?.transportType;
   }
 
-  private initTransportTypes(options?: IpcOptions) {
-    if (!options?.transportTypes) {
+  private extendOptions(options?: ConnectionOptions) {
+    this.options = {...this.options, ...options};
+    this.options.transportTypes = this.initTransportTypes(options);
+    this.options.sharedWorkerUri = this.options.sharedWorkerUri || BrowserTabIPC.defaultWorkerUri;
+    this.options.storageKey = this.options.storageKey || DefaultStorageKeyPrefix;
+    this.options.storageExpiredTime = this.options.storageExpiredTime || DefaultStorageExpiredTime;
+  }
+
+  private initTransportTypes(options?: ConnectionOptions) {
+    if (!options?.transportTypes || (Array.isArray(options?.transportTypes) && !options!.transportTypes.length)) {
       return [TransportType.sharedWorker, TransportType.sessionStorage];
     } else if (Array.isArray(options?.transportTypes) && options!.transportTypes.length) {
       return options.transportTypes;
@@ -59,34 +68,25 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   }
 
   public connect(options?: ConnectionOptions): Promise<ConnectionState> {
-    const lastTransport = this.transport;
-    this.transport = this.selectTransport(this.transport);
-    if (!this.transport) {
+    this.extendOptions(options);
+    return this.connectTransport(this.options).then((state) => {
+      this.subscribeTransport();
+      return state;
+    });
+  }
+
+  private connectTransport(options: ConnectionOptions, index = 0): Promise<ConnectionState> {
+    if (!Array.isArray(options.transportTypes) || !options.transportTypes.length || index >= options.transportTypes.length || !options.transportTypes[index]) {
       return this.failConnect();
     }
-    if (this.transport !== lastTransport) {
-      this.subscribeTransport();
-    }
-    const state = this.transport.connect(options).catch((error) => {
-      if (
-        this.transport instanceof SharedWorkerTransport &&
-        SessionStorageTransport.isSupported() &&
-        this.transportTypes.indexOf(TransportType.sessionStorage) > -1
-      ) {
-        this.unsubscribeTransport();
-        this.transport = new SessionStorageTransport();
-        this.subscribeTransport();
-        return this.connect(options);
+    this.transport = transportFabric(options.transportTypes[index]);
+    return this.transport.connect(options).catch((error) => {
+      ++index;
+      if (Array.isArray(options.transportTypes) && index < options.transportTypes!.length) {
+        return this.connectTransport(options, index);
       }
       throw error;
     });
-    return state;
-  }
-
-  private selectTransport(currentValue?: AbstractTransport) {
-    if (!!currentValue) return currentValue;
-    if (SharedWorkerTransport.isSupported() && this.transportTypes.indexOf(TransportType.sharedWorker) > -1) return new SharedWorkerTransport();
-    if (SessionStorageTransport.isSupported() && this.transportTypes.indexOf(TransportType.sessionStorage) > -1) return new SessionStorageTransport();
   }
 
   private subscribeTransport() {
@@ -97,31 +97,26 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   }
 
   private unsubscribeTransport() {
-    this.transport!.removeAllListeners(EventConnected);
-    this.transport!.removeAllListeners(EventConnectionError);
-    this.transport!.removeAllListeners(EventDisconnected);
-    this.transport!.removeAllListeners(EventMessage);
+    this.transport?.removeAllListeners(EventConnected);
+    this.transport?.removeAllListeners(EventConnectionError);
+    this.transport?.removeAllListeners(EventDisconnected);
+    this.transport?.removeAllListeners(EventMessage);
   }
 
   private failConnect() {
-    const errorMessage = 'Network transport not found';
-
-    this.onConnectionError({
-      type: null,
-      connected: false,
-      error: errorMessage,
-    });
-
     const reason: ConnectionState = {
       type: null,
-      error: errorMessage,
+      error: 'Network transport not found',
       connected: false,
     };
+
+    this.onConnectionError(reason);
     return Promise.reject(reason);
   }
 
   public disconnect(): Promise<ConnectionState> {
     try {
+      this.unsubscribeTransport();
       return this.transport?.disconnect() ?? Promise.reject(new Error('Undefined connection'));
     } catch (error) {
       return Promise.reject(error);
@@ -131,7 +126,6 @@ export class BrowserTabIPC extends EventEmitter implements AbstractTransport {
   }
 
   private unsubscribeEvents() {
-    console.log('unsubscribeTransport ', this.transport);
     this.removeAllListeners(EventConnected);
     this.removeAllListeners(EventConnectionError);
     this.removeAllListeners(EventDisconnected);

@@ -1,9 +1,9 @@
 /// <reference types="node" />
-import { TransportType } from './transport-type.enum';
+import EventEmitter from 'events';
 import { ConnectionOptions } from './connection-options';
 import { ConnectionState } from './connection-state';
 import { Action1 } from './functors';
-import EventEmitter from 'events';
+import { TransportType } from './transport-type.enum';
 export interface AbstractTransport extends EventEmitter {
     get transportType(): TransportType | undefined;
     /**

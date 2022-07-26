@@ -1,10 +1,11 @@
 import EventEmitter from 'events';
+
 import {AbstractTransport} from './abstract-transport';
+import {ClientMessage} from './client-message';
 import {ConnectionOptions} from './connection-options';
 import {ConnectionState} from './connection-state';
+import {DefaultStorageExpiredTime, DefaultStorageKeyPrefix, EventConnected, EventConnectionError, EventDisconnected, EventMessage} from './const';
 import {Action1} from './functors';
-import {EventConnected, EventConnectionError, EventDisconnected, EventMessage, DefaultStorageKeyPrefix, DefaultStorageExpiredTime} from './const';
-import {ClientMessage} from './client-message';
 import {TransportType} from './transport-type.enum';
 
 export class SessionStorageTransport extends EventEmitter implements AbstractTransport {

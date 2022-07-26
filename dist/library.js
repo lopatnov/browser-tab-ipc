@@ -48,6 +48,17 @@
       d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
   }
 
+  var __assign = function() {
+      __assign = Object.assign || function __assign(t) {
+          for (var s, i = 1, n = arguments.length; i < n; i++) {
+              s = arguments[i];
+              for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p)) t[p] = s[p];
+          }
+          return t;
+      };
+      return __assign.apply(this, arguments);
+  };
+
   function __awaiter(thisArg, _arguments, P, generator) {
       function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
       return new (P || (P = Promise))(function (resolve, reject) {
@@ -563,166 +574,6 @@
   }
   events.once = once_1;
 
-  var SharedWorkerTransport = /** @class */ (function (_super) {
-      __extends(SharedWorkerTransport, _super);
-      function SharedWorkerTransport() {
-          var _this = _super !== null && _super.apply(this, arguments) || this;
-          _this.beforeunloadHandler = function () { return _this.disconnect(); };
-          return _this;
-      }
-      SharedWorkerTransport.isSupported = function () {
-          return !!window.SharedWorker;
-      };
-      Object.defineProperty(SharedWorkerTransport.prototype, "transportType", {
-          get: function () {
-              return exports.TransportType.sharedWorker;
-          },
-          enumerable: false,
-          configurable: true
-      });
-      SharedWorkerTransport.prototype.onConnected = function (state) {
-          this.emit(EventConnected, state);
-      };
-      SharedWorkerTransport.prototype.onConnectionError = function (state) {
-          this.emit(EventConnectionError, state);
-      };
-      SharedWorkerTransport.prototype.onDisconnected = function (state) {
-          this.emit(EventDisconnected, state);
-      };
-      SharedWorkerTransport.prototype.onMessage = function (state) {
-          this.emit(EventMessage, state);
-      };
-      SharedWorkerTransport.prototype.connected = function (callback) {
-          this.on(EventConnected, callback);
-      };
-      SharedWorkerTransport.prototype.connectionError = function (callback) {
-          this.on(EventConnectionError, callback);
-      };
-      SharedWorkerTransport.prototype.disconnected = function (callback) {
-          this.on(EventDisconnected, callback);
-      };
-      SharedWorkerTransport.prototype.message = function (callback) {
-          this.on(EventMessage, callback);
-      };
-      SharedWorkerTransport.prototype.throwIfNotSupported = function () {
-          if (!SharedWorkerTransport.isSupported()) {
-              throw new Error('SharedWorker is not supported');
-          }
-      };
-      SharedWorkerTransport.prototype.connect = function (options) {
-          return __awaiter(this, void 0, void 0, function () {
-              var state, _a, ex_1;
-              return __generator(this, function (_b) {
-                  switch (_b.label) {
-                      case 0:
-                          _b.trys.push([0, 2, , 3]);
-                          this.throwIfNotSupported();
-                          _a = this;
-                          return [4 /*yield*/, this.createWorker(options)];
-                      case 1:
-                          _a.worker = _b.sent();
-                          this.startWorker(this.worker);
-                          state = this.getConnectionState();
-                          if (state.connected) {
-                              addEventListener('beforeunload', this.beforeunloadHandler);
-                              this.onConnected(state);
-                              return [2 /*return*/, state];
-                          }
-                          return [3 /*break*/, 3];
-                      case 2:
-                          ex_1 = _b.sent();
-                          state = this.getConnectionState();
-                          state.error = ex_1;
-                          this.onConnectionError(state);
-                          return [3 /*break*/, 3];
-                      case 3: throw state;
-                  }
-              });
-          });
-      };
-      SharedWorkerTransport.prototype.getConnectionState = function () {
-          var _a;
-          return {
-              type: this.transportType,
-              connected: !!((_a = this.worker) === null || _a === void 0 ? void 0 : _a.port),
-          };
-      };
-      SharedWorkerTransport.prototype.createWorker = function (options) {
-          return __awaiter(this, void 0, void 0, function () {
-              var url, isFileExists;
-              return __generator(this, function (_a) {
-                  switch (_a.label) {
-                      case 0:
-                          url = (options === null || options === void 0 ? void 0 : options.sharedWorkerUri) || BrowserTabIPC.defaultWorkerUri;
-                          return [4 /*yield*/, this.isFileExists(url)];
-                      case 1:
-                          isFileExists = _a.sent();
-                          if (!isFileExists) {
-                              throw new Error("File " + url + " does not exist");
-                          }
-                          return [2 /*return*/, new SharedWorker(url)];
-                  }
-              });
-          });
-      };
-      SharedWorkerTransport.prototype.isFileExists = function (url) {
-          return new Promise(function (resolve) {
-              var xhr = new XMLHttpRequest();
-              xhr.open('HEAD', url);
-              xhr.send();
-              xhr.onload = function () {
-                  resolve(xhr.status < 400);
-              };
-              xhr.onerror = function () {
-                  resolve(false);
-              };
-          });
-      };
-      SharedWorkerTransport.prototype.startWorker = function (worker) {
-          var _this = this;
-          worker.port.onmessage = function (ev) {
-              _this.onMessage(ev.data.message);
-          };
-          worker.port.start();
-      };
-      SharedWorkerTransport.prototype.disconnect = function () {
-          var _a, _b;
-          return __awaiter(this, void 0, void 0, function () {
-              var state;
-              return __generator(this, function (_c) {
-                  if (this.worker) {
-                      try {
-                          this.worker.port.postMessage({
-                              cmd: 'x',
-                          });
-                      }
-                      finally {
-                          (_b = (_a = this.worker) === null || _a === void 0 ? void 0 : _a.port) === null || _b === void 0 ? void 0 : _b.close();
-                          this.worker = undefined;
-                      }
-                      removeEventListener('beforeunload', this.beforeunloadHandler);
-                  }
-                  state = this.getConnectionState();
-                  this.onDisconnected(state);
-                  return [2 /*return*/, state];
-              });
-          });
-      };
-      SharedWorkerTransport.prototype.postMessage = function (message) {
-          var _a;
-          return __awaiter(this, void 0, void 0, function () {
-              return __generator(this, function (_b) {
-                  (_a = this.worker) === null || _a === void 0 ? void 0 : _a.port.postMessage({
-                      cmd: 'm',
-                      message: message,
-                  });
-                  return [2 /*return*/];
-              });
-          });
-      };
-      return SharedWorkerTransport;
-  }(events));
-
   var SessionStorageTransport = /** @class */ (function (_super) {
       __extends(SessionStorageTransport, _super);
       function SessionStorageTransport() {
@@ -947,11 +798,189 @@
       return SessionStorageTransport;
   }(events));
 
+  var SharedWorkerTransport = /** @class */ (function (_super) {
+      __extends(SharedWorkerTransport, _super);
+      function SharedWorkerTransport() {
+          var _this = _super !== null && _super.apply(this, arguments) || this;
+          _this.beforeunloadHandler = function () { return _this.disconnect(); };
+          return _this;
+      }
+      SharedWorkerTransport.isSupported = function () {
+          return !!window.SharedWorker;
+      };
+      Object.defineProperty(SharedWorkerTransport.prototype, "transportType", {
+          get: function () {
+              return exports.TransportType.sharedWorker;
+          },
+          enumerable: false,
+          configurable: true
+      });
+      SharedWorkerTransport.prototype.onConnected = function (state) {
+          this.emit(EventConnected, state);
+      };
+      SharedWorkerTransport.prototype.onConnectionError = function (state) {
+          this.emit(EventConnectionError, state);
+      };
+      SharedWorkerTransport.prototype.onDisconnected = function (state) {
+          this.emit(EventDisconnected, state);
+      };
+      SharedWorkerTransport.prototype.onMessage = function (state) {
+          this.emit(EventMessage, state);
+      };
+      SharedWorkerTransport.prototype.connected = function (callback) {
+          this.on(EventConnected, callback);
+      };
+      SharedWorkerTransport.prototype.connectionError = function (callback) {
+          this.on(EventConnectionError, callback);
+      };
+      SharedWorkerTransport.prototype.disconnected = function (callback) {
+          this.on(EventDisconnected, callback);
+      };
+      SharedWorkerTransport.prototype.message = function (callback) {
+          this.on(EventMessage, callback);
+      };
+      SharedWorkerTransport.prototype.throwIfNotSupported = function () {
+          if (!SharedWorkerTransport.isSupported()) {
+              throw new Error('SharedWorker is not supported');
+          }
+      };
+      SharedWorkerTransport.prototype.connect = function (options) {
+          return __awaiter(this, void 0, void 0, function () {
+              var state, _a, ex_1;
+              return __generator(this, function (_b) {
+                  switch (_b.label) {
+                      case 0:
+                          _b.trys.push([0, 2, , 3]);
+                          this.throwIfNotSupported();
+                          this.throwIfNotWorkerUri(options);
+                          _a = this;
+                          return [4 /*yield*/, this.createWorker(options)];
+                      case 1:
+                          _a.worker = _b.sent();
+                          this.startWorker(this.worker);
+                          state = this.getConnectionState();
+                          if (state.connected) {
+                              addEventListener('beforeunload', this.beforeunloadHandler);
+                              this.onConnected(state);
+                              return [2 /*return*/, state];
+                          }
+                          return [3 /*break*/, 3];
+                      case 2:
+                          ex_1 = _b.sent();
+                          state = this.getConnectionState();
+                          state.error = ex_1;
+                          this.onConnectionError(state);
+                          return [3 /*break*/, 3];
+                      case 3: throw state;
+                  }
+              });
+          });
+      };
+      SharedWorkerTransport.prototype.throwIfNotWorkerUri = function (options) {
+          if (options === null || options === void 0 ? void 0 : options.sharedWorkerUri)
+              return;
+          throw new Error('Worker URI is not defined');
+      };
+      SharedWorkerTransport.prototype.getConnectionState = function () {
+          var _a;
+          return {
+              type: this.transportType,
+              connected: !!((_a = this.worker) === null || _a === void 0 ? void 0 : _a.port),
+          };
+      };
+      SharedWorkerTransport.prototype.createWorker = function (options) {
+          return __awaiter(this, void 0, void 0, function () {
+              var url, isFileExists;
+              return __generator(this, function (_a) {
+                  switch (_a.label) {
+                      case 0:
+                          url = options.sharedWorkerUri;
+                          return [4 /*yield*/, this.isFileExists(url)];
+                      case 1:
+                          isFileExists = _a.sent();
+                          if (!isFileExists) {
+                              throw new Error("File " + url + " does not exist");
+                          }
+                          return [2 /*return*/, new SharedWorker(url)];
+                  }
+              });
+          });
+      };
+      SharedWorkerTransport.prototype.isFileExists = function (url) {
+          return new Promise(function (resolve) {
+              var xhr = new XMLHttpRequest();
+              xhr.open('HEAD', url);
+              xhr.send();
+              xhr.onload = function () {
+                  resolve(xhr.status < 400);
+              };
+              xhr.onerror = function () {
+                  resolve(false);
+              };
+          });
+      };
+      SharedWorkerTransport.prototype.startWorker = function (worker) {
+          var _this = this;
+          worker.port.onmessage = function (ev) {
+              _this.onMessage(ev.data.message);
+          };
+          worker.port.start();
+      };
+      SharedWorkerTransport.prototype.disconnect = function () {
+          var _a, _b;
+          return __awaiter(this, void 0, void 0, function () {
+              var state;
+              return __generator(this, function (_c) {
+                  if (this.worker) {
+                      try {
+                          this.worker.port.postMessage({
+                              cmd: 'x',
+                          });
+                      }
+                      finally {
+                          (_b = (_a = this.worker) === null || _a === void 0 ? void 0 : _a.port) === null || _b === void 0 ? void 0 : _b.close();
+                          this.worker = undefined;
+                      }
+                      removeEventListener('beforeunload', this.beforeunloadHandler);
+                  }
+                  state = this.getConnectionState();
+                  this.onDisconnected(state);
+                  return [2 /*return*/, state];
+              });
+          });
+      };
+      SharedWorkerTransport.prototype.postMessage = function (message) {
+          var _a;
+          return __awaiter(this, void 0, void 0, function () {
+              return __generator(this, function (_b) {
+                  (_a = this.worker) === null || _a === void 0 ? void 0 : _a.port.postMessage({
+                      cmd: 'm',
+                      message: message,
+                  });
+                  return [2 /*return*/];
+              });
+          });
+      };
+      return SharedWorkerTransport;
+  }(events));
+
+  function transportFabric(transportType) {
+      switch (transportType) {
+          case exports.TransportType.sessionStorage:
+              return new SessionStorageTransport();
+          case exports.TransportType.sharedWorker:
+              return new SharedWorkerTransport();
+          default:
+              throw new Error("Unknown transport type: " + transportType);
+      }
+  }
+
   var BrowserTabIPC = /** @class */ (function (_super) {
       __extends(BrowserTabIPC, _super);
       function BrowserTabIPC(options) {
           var _this = _super.call(this) || this;
-          _this.transportTypes = _this.initTransportTypes(options);
+          _this.options = {};
+          _this.extendOptions(options);
           return _this;
       }
       BrowserTabIPC.prototype.onConnected = function (state) {
@@ -986,8 +1015,15 @@
           enumerable: false,
           configurable: true
       });
+      BrowserTabIPC.prototype.extendOptions = function (options) {
+          this.options = __assign(__assign({}, this.options), options);
+          this.options.transportTypes = this.initTransportTypes(options);
+          this.options.sharedWorkerUri = this.options.sharedWorkerUri || BrowserTabIPC.defaultWorkerUri;
+          this.options.storageKey = this.options.storageKey || DefaultStorageKeyPrefix;
+          this.options.storageExpiredTime = this.options.storageExpiredTime || DefaultStorageExpiredTime;
+      };
       BrowserTabIPC.prototype.initTransportTypes = function (options) {
-          if (!(options === null || options === void 0 ? void 0 : options.transportTypes)) {
+          if (!(options === null || options === void 0 ? void 0 : options.transportTypes) || (Array.isArray(options === null || options === void 0 ? void 0 : options.transportTypes) && !options.transportTypes.length)) {
               return [exports.TransportType.sharedWorker, exports.TransportType.sessionStorage];
           }
           else if (Array.isArray(options === null || options === void 0 ? void 0 : options.transportTypes) && options.transportTypes.length) {
@@ -999,34 +1035,26 @@
       };
       BrowserTabIPC.prototype.connect = function (options) {
           var _this = this;
-          var lastTransport = this.transport;
-          this.transport = this.selectTransport(this.transport);
-          if (!this.transport) {
+          this.extendOptions(options);
+          return this.connectTransport(this.options).then(function (state) {
+              _this.subscribeTransport();
+              return state;
+          });
+      };
+      BrowserTabIPC.prototype.connectTransport = function (options, index) {
+          var _this = this;
+          if (index === void 0) { index = 0; }
+          if (!Array.isArray(options.transportTypes) || !options.transportTypes.length || index >= options.transportTypes.length || !options.transportTypes[index]) {
               return this.failConnect();
           }
-          if (this.transport !== lastTransport) {
-              this.subscribeTransport();
-          }
-          var state = this.transport.connect(options).catch(function (error) {
-              if (_this.transport instanceof SharedWorkerTransport &&
-                  SessionStorageTransport.isSupported() &&
-                  _this.transportTypes.indexOf(exports.TransportType.sessionStorage) > -1) {
-                  _this.unsubscribeTransport();
-                  _this.transport = new SessionStorageTransport();
-                  _this.subscribeTransport();
-                  return _this.connect(options);
+          this.transport = transportFabric(options.transportTypes[index]);
+          return this.transport.connect(options).catch(function (error) {
+              ++index;
+              if (Array.isArray(options.transportTypes) && index < options.transportTypes.length) {
+                  return _this.connectTransport(options, index);
               }
               throw error;
           });
-          return state;
-      };
-      BrowserTabIPC.prototype.selectTransport = function (currentValue) {
-          if (!!currentValue)
-              return currentValue;
-          if (SharedWorkerTransport.isSupported() && this.transportTypes.indexOf(exports.TransportType.sharedWorker) > -1)
-              return new SharedWorkerTransport();
-          if (SessionStorageTransport.isSupported() && this.transportTypes.indexOf(exports.TransportType.sessionStorage) > -1)
-              return new SessionStorageTransport();
       };
       BrowserTabIPC.prototype.subscribeTransport = function () {
           var _this = this;
@@ -1036,28 +1064,25 @@
           this.transport.message(function (content) { return _this.onMessage(content); });
       };
       BrowserTabIPC.prototype.unsubscribeTransport = function () {
-          this.transport.removeAllListeners(EventConnected);
-          this.transport.removeAllListeners(EventConnectionError);
-          this.transport.removeAllListeners(EventDisconnected);
-          this.transport.removeAllListeners(EventMessage);
+          var _a, _b, _c, _d;
+          (_a = this.transport) === null || _a === void 0 ? void 0 : _a.removeAllListeners(EventConnected);
+          (_b = this.transport) === null || _b === void 0 ? void 0 : _b.removeAllListeners(EventConnectionError);
+          (_c = this.transport) === null || _c === void 0 ? void 0 : _c.removeAllListeners(EventDisconnected);
+          (_d = this.transport) === null || _d === void 0 ? void 0 : _d.removeAllListeners(EventMessage);
       };
       BrowserTabIPC.prototype.failConnect = function () {
-          var errorMessage = 'Network transport not found';
-          this.onConnectionError({
-              type: null,
-              connected: false,
-              error: errorMessage,
-          });
           var reason = {
               type: null,
-              error: errorMessage,
+              error: 'Network transport not found',
               connected: false,
           };
+          this.onConnectionError(reason);
           return Promise.reject(reason);
       };
       BrowserTabIPC.prototype.disconnect = function () {
           var _a, _b;
           try {
+              this.unsubscribeTransport();
               return (_b = (_a = this.transport) === null || _a === void 0 ? void 0 : _a.disconnect()) !== null && _b !== void 0 ? _b : Promise.reject(new Error('Undefined connection'));
           }
           catch (error) {
@@ -1068,7 +1093,6 @@
           }
       };
       BrowserTabIPC.prototype.unsubscribeEvents = function () {
-          console.log('unsubscribeTransport ', this.transport);
           this.removeAllListeners(EventConnected);
           this.removeAllListeners(EventConnectionError);
           this.removeAllListeners(EventDisconnected);

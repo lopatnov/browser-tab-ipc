@@ -1,10 +1,10 @@
 /// <reference types="node" />
-import { TransportType } from './transport-type.enum';
 import EventEmitter from 'events';
 import { AbstractTransport } from './abstract-transport';
 import { ConnectionOptions } from './connection-options';
 import { ConnectionState } from './connection-state';
 import { Action1 } from './functors';
+import { TransportType } from './transport-type.enum';
 export declare class SharedWorkerTransport extends EventEmitter implements AbstractTransport {
     static isSupported(): boolean;
     private worker;
@@ -20,6 +20,7 @@ export declare class SharedWorkerTransport extends EventEmitter implements Abstr
     message(callback: Action1<any>): void;
     private throwIfNotSupported;
     connect(options?: ConnectionOptions): Promise<ConnectionState>;
+    throwIfNotWorkerUri(options?: ConnectionOptions): void;
     private getConnectionState;
     private createWorker;
     private isFileExists;

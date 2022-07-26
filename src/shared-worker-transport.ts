@@ -1,11 +1,11 @@
-import {TransportType} from './transport-type.enum';
 import EventEmitter from 'events';
+
 import {AbstractTransport} from './abstract-transport';
 import {ConnectionOptions} from './connection-options';
 import {ConnectionState} from './connection-state';
-import {Action1} from './functors';
 import {EventConnected, EventConnectionError, EventDisconnected, EventMessage} from './const';
-import {BrowserTabIPC} from './browser-tab-ipc';
+import {Action1} from './functors';
+import {TransportType} from './transport-type.enum';
 
 export class SharedWorkerTransport extends EventEmitter implements AbstractTransport {
   static isSupported() {
@@ -55,7 +55,8 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
     let state: ConnectionState;
     try {
       this.throwIfNotSupported();
-      this.worker = await this.createWorker(options);
+      this.throwIfNotWorkerUri(options);
+      this.worker = await this.createWorker(options!);
       this.startWorker(this.worker);
       state = this.getConnectionState();
       if (state.connected) {
@@ -71,6 +72,11 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
     throw state;
   }
 
+  throwIfNotWorkerUri(options?: ConnectionOptions) {
+    if (options?.sharedWorkerUri) return;
+    throw new Error('Worker URI is not defined');
+  }
+
   private getConnectionState(): ConnectionState {
     return {
       type: this.transportType,
@@ -78,8 +84,8 @@ export class SharedWorkerTransport extends EventEmitter implements AbstractTrans
     };
   }
 
-  private async createWorker(options?: ConnectionOptions) {
-    const url = options?.sharedWorkerUri || BrowserTabIPC.defaultWorkerUri;
+  private async createWorker(options: ConnectionOptions) {
+    const url = options.sharedWorkerUri!;
     const isFileExists = await this.isFileExists(url);
     if (!isFileExists) {
       throw new Error(`File ${url} does not exist`);
