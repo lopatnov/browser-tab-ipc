@@ -1,8 +1,8 @@
-import json from 'rollup-plugin-json';
-import typescript from 'rollup-plugin-typescript2';
-import commonjs from 'rollup-plugin-commonjs';
-import resolve from 'rollup-plugin-node-resolve';
 import uglify from '@lopatnov/rollup-plugin-uglify';
+import commonjs from 'rollup-plugin-commonjs';
+import json from 'rollup-plugin-json';
+import resolve from 'rollup-plugin-node-resolve';
+import typescript from 'rollup-plugin-typescript2';
 
 import pkg from './package.json';
 
@@ -15,11 +15,17 @@ export default [
         format: 'umd',
         name: pkg.umdName,
         sourcemap: true,
+        globals: {
+          events: 'EventEmitter',
+        },
       },
       {
         file: pkg.module,
         format: 'es',
         sourcemap: true,
+        globals: {
+          events: 'EventEmitter',
+        },
       },
     ],
     external: [...Object.keys(pkg.devDependencies || {}), ...Object.keys(pkg.peerDependencies || {})],
@@ -28,7 +34,10 @@ export default [
       typescript({
         typescript: require('typescript'),
       }),
-      resolve(),
+      resolve({
+        browser: true,
+        preferBuiltins: false,
+      }),
       commonjs(),
     ],
   },
@@ -39,6 +48,9 @@ export default [
       name: pkg.umdName,
       format: 'umd',
       sourcemap: true,
+      globals: {
+        events: 'EventEmitter',
+      },
     },
     external: [...Object.keys(pkg.devDependencies || {}), ...Object.keys(pkg.peerDependencies || {})],
     plugins: [
@@ -46,7 +58,10 @@ export default [
       typescript({
         typescript: require('typescript'),
       }),
-      resolve(),
+      resolve({
+        browser: true,
+        preferBuiltins: false,
+      }),
       commonjs(),
       uglify(),
     ],
@@ -65,7 +80,10 @@ export default [
       typescript({
         typescript: require('typescript'),
       }),
-      resolve(),
+      resolve({
+        browser: true,
+        preferBuiltins: false,
+      }),
       commonjs(),
     ],
   },

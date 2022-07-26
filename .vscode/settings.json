@@ -1,4 +1,9 @@
 {
   "cmake.configureOnOpen": false,
-  "editor.formatOnSave": true
+  "editor.codeLens": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": true,
+    "source.organizeImports": true
+  }
 }

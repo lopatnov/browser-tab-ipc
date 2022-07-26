@@ -1,17 +1,16 @@
-import EventEmitter from 'events';
 import {AbstractTransport} from './abstract-transport';
+import {ClientMessage} from './client-message';
 import {ConnectionOptions} from './connection-options';
 import {ConnectionState} from './connection-state';
-import {Action1} from './functors';
-import {EventConnected, EventConnectionError, EventDisconnected, EventMessage, DefaultStorageKeyPrefix, DefaultStorageExpiredTime} from './const';
-import {ClientMessage} from './client-message';
+import {DefaultStorageExpiredTime, DefaultStorageKeyPrefix} from './const';
 import {TransportType} from './transport-type.enum';
 
-export class SessionStorageTransport extends EventEmitter implements AbstractTransport {
+export class SessionStorageTransport extends AbstractTransport {
   static isSupported() {
     return !!localStorage;
   }
 
+  public readonly transportType = TransportType.sessionStorage;
   private isConnected: boolean = false;
   private keyPrefix: string = DefaultStorageKeyPrefix;
   private messageTime: Date = new Date(0, 0, 0, 0, 0, 0, 0);
@@ -25,36 +24,6 @@ export class SessionStorageTransport extends EventEmitter implements AbstractTra
       this.onStorageChange();
     }
   };
-
-  get transportType() {
-    return TransportType.sessionStorage;
-  }
-
-  private onConnected(state: ConnectionState) {
-    this.emit(EventConnected, state);
-  }
-  private onConnectionError(state: ConnectionState) {
-    this.emit(EventConnectionError, state);
-  }
-  private onDisconnected(state: ConnectionState) {
-    this.emit(EventDisconnected, state);
-  }
-  private onMessage(state: any) {
-    this.emit(EventMessage, state);
-  }
-
-  public connected(callback: Action1<ConnectionState>) {
-    this.on(EventConnected, callback);
-  }
-  public connectionError(callback: Action1<ConnectionState>) {
-    this.on(EventConnectionError, callback);
-  }
-  public disconnected(callback: Action1<ConnectionState>) {
-    this.on(EventDisconnected, callback);
-  }
-  public message(callback: Action1<any>) {
-    this.on(EventMessage, callback);
-  }
 
   public async connect(options?: ConnectionOptions | undefined): Promise<ConnectionState> {
     let state: ConnectionState;
