@@ -624,6 +624,7 @@
     (function (TransportType) {
         TransportType[TransportType["sessionStorage"] = 10] = "sessionStorage";
         TransportType[TransportType["sharedWorker"] = 20] = "sharedWorker";
+        TransportType[TransportType["broadcastChannel"] = 30] = "broadcastChannel";
     })(exports.TransportType || (exports.TransportType = {}));
 
     var SessionStorageTransport = /** @class */ (function (_super) {
@@ -992,7 +993,7 @@
         };
         BrowserTabIPC.prototype.initTransportTypes = function (options) {
             if (!(options === null || options === void 0 ? void 0 : options.transportTypes) || (Array.isArray(options === null || options === void 0 ? void 0 : options.transportTypes) && !options.transportTypes.length)) {
-                return [exports.TransportType.sharedWorker, exports.TransportType.sessionStorage];
+                return [exports.TransportType.broadcastChannel, exports.TransportType.sharedWorker, exports.TransportType.sessionStorage];
             }
             else if (Array.isArray(options === null || options === void 0 ? void 0 : options.transportTypes) && options.transportTypes.length) {
                 return options.transportTypes;
