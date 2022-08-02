@@ -4,6 +4,21 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.browserTabIpc = {}));
 })(this, (function (exports) { 'use strict';
 
+    /*! *****************************************************************************
+    Copyright (c) Microsoft Corporation.
+
+    Permission to use, copy, modify, and/or distribute this software for any
+    purpose with or without fee is hereby granted.
+
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+    PERFORMANCE OF THIS SOFTWARE.
+    ***************************************************************************** */
+    /* global Reflect, Promise */
 
     var extendStatics = function(d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -612,6 +627,77 @@
         TransportType[TransportType["broadcastChannel"] = 30] = "broadcastChannel";
     })(exports.TransportType || (exports.TransportType = {}));
 
+    var BroadcastChannelTransport = /** @class */ (function (_super) {
+        __extends(BroadcastChannelTransport, _super);
+        function BroadcastChannelTransport() {
+            var _this = _super !== null && _super.apply(this, arguments) || this;
+            _this.transportType = exports.TransportType.broadcastChannel;
+            return _this;
+        }
+        BroadcastChannelTransport.isSupported = function () {
+            return !!self.BroadcastChannel;
+        };
+        BroadcastChannelTransport.prototype.connect = function (options) {
+            return __awaiter(this, void 0, void 0, function () {
+                var state, channel;
+                var _this = this;
+                return __generator(this, function (_a) {
+                    try {
+                        this.throwIfNotSupported();
+                        channel = new BroadcastChannel((options === null || options === void 0 ? void 0 : options.storageKey) || DefaultStorageKeyPrefix);
+                        channel.onmessage = function (e) { return _this.onMessage(e.data); };
+                        this.channel = channel;
+                        state = this.getConnectionState();
+                        this.onConnected(state);
+                        return [2 /*return*/, state];
+                    }
+                    catch (ex) {
+                        state = this.getConnectionState();
+                        state.error = ex;
+                        this.onConnectionError(state);
+                    }
+                    throw state;
+                });
+            });
+        };
+        BroadcastChannelTransport.prototype.disconnect = function () {
+            var _a;
+            return __awaiter(this, void 0, void 0, function () {
+                var state;
+                return __generator(this, function (_b) {
+                    (_a = this.channel) === null || _a === void 0 ? void 0 : _a.close();
+                    this.channel = undefined;
+                    state = this.getConnectionState();
+                    this.onDisconnected(state);
+                    return [2 /*return*/, state];
+                });
+            });
+        };
+        BroadcastChannelTransport.prototype.postMessage = function (message) {
+            var _a;
+            return __awaiter(this, void 0, void 0, function () {
+                return __generator(this, function (_b) {
+                    (_a = this.channel) === null || _a === void 0 ? void 0 : _a.postMessage(message);
+                    return [2 /*return*/];
+                });
+            });
+        };
+        BroadcastChannelTransport.prototype.getConnectionState = function () {
+            return {
+                type: exports.TransportType.broadcastChannel,
+                connected: !!this.channel,
+            };
+        };
+        BroadcastChannelTransport.prototype.throwIfNotSupported = function () {
+            if (!BroadcastChannelTransport.isSupported()) {
+                var state = this.getConnectionState();
+                state.error = new Error('Broadcast Channel is not supported');
+                throw state;
+            }
+        };
+        return BroadcastChannelTransport;
+    }(AbstractTransport));
+
     var SessionStorageTransport = /** @class */ (function (_super) {
         __extends(SessionStorageTransport, _super);
         function SessionStorageTransport() {
@@ -948,6 +1034,8 @@
                 return new SessionStorageTransport();
             case exports.TransportType.sharedWorker:
                 return new SharedWorkerTransport();
+            case exports.TransportType.broadcastChannel:
+                return new BroadcastChannelTransport();
             default:
                 throw new Error("Unknown transport type: " + transportType);
         }
