@@ -4,21 +4,6 @@
     (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global.browserTabIpc = {}));
 })(this, (function (exports) { 'use strict';
 
-    /*! *****************************************************************************
-    Copyright (c) Microsoft Corporation.
-
-    Permission to use, copy, modify, and/or distribute this software for any
-    purpose with or without fee is hereby granted.
-
-    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
-    REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
-    AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
-    INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
-    LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
-    OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
-    PERFORMANCE OF THIS SOFTWARE.
-    ***************************************************************************** */
-    /* global Reflect, Promise */
 
     var extendStatics = function(d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -624,6 +609,7 @@
     (function (TransportType) {
         TransportType[TransportType["sessionStorage"] = 10] = "sessionStorage";
         TransportType[TransportType["sharedWorker"] = 20] = "sharedWorker";
+        TransportType[TransportType["broadcastChannel"] = 30] = "broadcastChannel";
     })(exports.TransportType || (exports.TransportType = {}));
 
     var SessionStorageTransport = /** @class */ (function (_super) {
@@ -992,7 +978,7 @@
         };
         BrowserTabIPC.prototype.initTransportTypes = function (options) {
             if (!(options === null || options === void 0 ? void 0 : options.transportTypes) || (Array.isArray(options === null || options === void 0 ? void 0 : options.transportTypes) && !options.transportTypes.length)) {
-                return [exports.TransportType.sharedWorker, exports.TransportType.sessionStorage];
+                return [exports.TransportType.broadcastChannel, exports.TransportType.sharedWorker, exports.TransportType.sessionStorage];
             }
             else if (Array.isArray(options === null || options === void 0 ? void 0 : options.transportTypes) && options.transportTypes.length) {
                 return options.transportTypes;

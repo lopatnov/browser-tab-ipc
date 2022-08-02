@@ -29,7 +29,7 @@ export class BrowserTabIPC extends AbstractTransport {
 
   private initTransportTypes(options?: ConnectionOptions) {
     if (!options?.transportTypes || (Array.isArray(options?.transportTypes) && !options!.transportTypes.length)) {
-      return [TransportType.sharedWorker, TransportType.sessionStorage];
+      return [TransportType.broadcastChannel, TransportType.sharedWorker, TransportType.sessionStorage];
     } else if (Array.isArray(options?.transportTypes) && options!.transportTypes.length) {
       return options.transportTypes;
     } else {

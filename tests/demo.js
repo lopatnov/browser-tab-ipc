@@ -46,6 +46,8 @@ $(function () {
         return browserTabIpc.TransportType.sharedWorker;
       case 'localStorageTransport':
         return browserTabIpc.TransportType.sessionStorage;
+      case 'broadcastChannelTransport':
+        return browserTabIpc.TransportType.broadcastChannel;
       default:
         return undefined;
     }
