@@ -5,7 +5,7 @@ import {resolve} from 'node:path';
 import kill from 'tree-kill';
 
 const BASE_URL = 'http://localhost:4444';
-const DEMO_URL = `${BASE_URL}/docs/demo.html`;
+const DEMO_URL = `${BASE_URL}/docs/index.html`;
 const PROJECT_ROOT = resolve(__dirname, '..');
 
 // ── Helpers ────────────────────────────────────────────────────────────────

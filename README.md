@@ -303,6 +303,7 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 - [SharedWorker API](https://developer.mozilla.org/en-US/docs/Web/API/SharedWorker) — cross-tab shared execution context
 - [Web Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API) — universal fallback transport
 - [Node.js EventEmitter](https://nodejs.org/api/events.html) — event-driven API
+- [Yarn](https://yarnpkg.com/) — package management and script runner
 - [Babel](https://babeljs.io/) — TypeScript transpilation pipeline for tests
 - [Puppeteer](https://pptr.dev/) + [Jest](https://jestjs.io/) — cross-tab integration testing in a real browser
 
