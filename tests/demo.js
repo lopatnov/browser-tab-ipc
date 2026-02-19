@@ -3,18 +3,44 @@ $(function () {
     return $('<span>').text(String(s)).html();
   }
 
+  function addMessage(type, html) {
+    const $li = $('<li>').addClass('msg ' + type).html(html);
+    $('#history').append($li);
+    const el = document.getElementById('history');
+    el.scrollTop = el.scrollHeight;
+  }
+
+  function addSystemMsg(text, isError) {
+    addMessage('system' + (isError ? ' error' : ''),
+      '<span class="msg-bubble">' + esc(text) + '</span>');
+  }
+
+  function addChatMsg(direction, label, text) {
+    addMessage(direction,
+      '<span class="msg-label">' + label + '</span>' +
+      '<span class="msg-bubble">' + esc(text) + '</span>');
+  }
+
   let ipc;
+
+  function getTransportLabel(type) {
+    const labels = {
+      sharedWorkerTransport:    'SharedWorker',
+      localStorageTransport:    'SessionStorage',
+      broadcastChannelTransport:'BroadcastChannel',
+      anyTransport:             'Auto',
+    };
+    return labels[type] || 'Unknown';
+  }
 
   function connect(transportTypes) {
     const ipcUrl = document.getElementById('workerUrl').value;
 
-    ipc = new browserTabIpc.BrowserTabIPC({
-      transportTypes: transportTypes,
-    });
+    ipc = new browserTabIpc.BrowserTabIPC({ transportTypes });
 
     ipc.message(function (e) {
       console.log('Message:', e);
-      $('#history').append($('<li>').html(`<mark class="tertiary">Re:</mark> <span class="re">${esc(e)}</span>`));
+      addChatMsg('received', 'Other tab', String(e));
     });
 
     ipc.connected((state) => {
@@ -27,49 +53,47 @@ $(function () {
 
     ipc.disconnected((state) => {
       console.log('Disconnected:', state);
-      $('#history').append($('<li>').html(`Disconnected`));
+      addSystemMsg('Disconnected');
     });
 
-    ipc
-      .connect({
-        sharedWorkerUri: ipcUrl,
-      })
-      .then(function (e) {
-        $('#history').append($('<li>').html(`Connected: ${esc(e.connected)}`));
+    ipc.connect({ sharedWorkerUri: ipcUrl })
+      .then(function (state) {
+        const transportName = state.type !== undefined && state.type !== null
+          ? browserTabIpc.TransportType[state.type] || String(state.type)
+          : getTransportLabel($('input[name=transport]:checked').val());
+        $('#transport-badge').text(transportName);
+        addSystemMsg('Connected · ' + transportName);
       })
       .catch(function (e) {
         console.error(e);
-        $('#history').append($('<li>').html(`<pre>Connection Error: \n${esc(JSON.stringify(e).replace(/\\n/g, '\n'))}</pre>`));
+        addSystemMsg('Connection failed: ' + JSON.stringify(e), true);
       });
   }
 
   function getTransportType() {
     const option = $('input[name=transport]:checked', '#options').val();
     switch (option) {
-      case 'sharedWorkerTransport':
-        return browserTabIpc.TransportType.sharedWorker;
-      case 'localStorageTransport':
-        return browserTabIpc.TransportType.sessionStorage;
-      case 'broadcastChannelTransport':
-        return browserTabIpc.TransportType.broadcastChannel;
-      default:
-        return undefined;
+      case 'sharedWorkerTransport':     return browserTabIpc.TransportType.sharedWorker;
+      case 'localStorageTransport':     return browserTabIpc.TransportType.sessionStorage;
+      case 'broadcastChannelTransport': return browserTabIpc.TransportType.broadcastChannel;
+      default:                          return undefined;
     }
   }
 
   function showChat() {
-    $('.options.row').hide();
-    $('.hidden.browser-chat').removeClass('hidden');
+    $('#connect-panel').addClass('d-none');
+    $('#chat-panel').removeClass('d-none');
+    $('#text').focus();
   }
 
   function hideChat() {
-    $('.options.row').show();
-    $('.browser-chat').addClass('hidden');
+    $('#chat-panel').addClass('d-none');
+    $('#connect-panel').removeClass('d-none');
+    $('#history').empty();
   }
 
   function connectClick() {
-    const transportType = getTransportType();
-    connect(transportType);
+    connect(getTransportType());
     showChat();
   }
 
@@ -78,32 +102,18 @@ $(function () {
     hideChat();
   }
 
-  function sendMessage() {
-    const value = $('#text').val();
+  function sendClick() {
+    const value = String($('#text').val()).trim();
+    if (!value) return;
     ipc.postMessage(value);
-  }
-
-  function rememberMyText() {
-    const value = $('#text').val();
-    $('#history').append($('<li>').html(`<mark class="secondary">Me:</mark> <span class="me">${esc(value)}</span>`));
-  }
-
-  function clear() {
+    addChatMsg('sent', 'Me', value);
     $('#text').val('');
   }
 
-  function sendClick() {
-    sendMessage();
-    rememberMyText();
-    clear();
-  }
-
-  $('#connectBtn').click(connectClick);
-  $('#disconnectBtn').click(disconnectClick);
-  $('#sendBtn').click(sendClick);
-  $('#text').on('keypress', function (e) {
-    if (e.which == 13) {
-      sendClick();
-    }
+  $('#connectBtn').on('click', connectClick);
+  $('#disconnectBtn').on('click', disconnectClick);
+  $('#sendBtn').on('click', sendClick);
+  $('#text').on('keydown', function (e) {
+    if (e.key === 'Enter') sendClick();
   });
 });
