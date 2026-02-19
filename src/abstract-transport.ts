@@ -18,8 +18,8 @@ export abstract class AbstractTransport extends EventEmitter {
   protected onDisconnected(state: ConnectionState) {
     this.emit(EventDisconnected, state);
   }
-  protected onMessage(state: any) {
-    this.emit(EventMessage, state);
+  protected onMessage(message: unknown) {
+    this.emit(EventMessage, message);
   }
 
   /**

@@ -1,8 +1,8 @@
 # NOTICE
 
-TypeScript Library: @lopatnov/sample-library
+TypeScript Library: @lopatnov/browser-tab-ipc
 
-Copyright: 2020 Oleksandr Lopatnov
+Copyright: 2019–2026 Oleksandr Lopatnov
 
 This library based on @lopatnov/sample-library
 Template link: <https://github.com/My-Templates/TypeScript-Library>

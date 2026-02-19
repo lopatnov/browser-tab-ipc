@@ -13,10 +13,10 @@ export class SessionStorageTransport extends AbstractTransport {
   public readonly transportType = TransportType.sessionStorage;
   private isConnected: boolean = false;
   private keyPrefix: string = DefaultStorageKeyPrefix;
-  private messageTime: Date = new Date(0, 0, 0, 0, 0, 0, 0);
+  private messageTime: Date = new Date(0);
   private messageExpiredTime: number = DefaultStorageExpiredTime;
   private clearOldMessagesTimeout: NodeJS.Timeout | undefined;
-  private lastClearTime: Date = new Date(0, 0, 0, 0, 0, 0, 0);
+  private lastClearTime: Date = new Date(0);
   private maxStorageCleanTime = DefaultStorageExpiredTime * 3;
   private beforeunloadHandler = () => this.disconnect();
   private storageHandler = (e: StorageEvent) => {
@@ -67,6 +67,10 @@ export class SessionStorageTransport extends AbstractTransport {
   }
 
   public async disconnect(): Promise<ConnectionState> {
+    if (this.clearOldMessagesTimeout) {
+      clearTimeout(this.clearOldMessagesTimeout);
+      this.clearOldMessagesTimeout = undefined;
+    }
     this.clearOldMessages();
     removeEventListener('beforeunload', this.beforeunloadHandler);
     removeEventListener('storage', this.storageHandler);
@@ -77,7 +81,7 @@ export class SessionStorageTransport extends AbstractTransport {
   }
 
   public async postMessage(message: any): Promise<void> {
-    if (!this.connected) return;
+    if (!this.isConnected) return;
     const date = new Date();
     this.setMessageItem(message, date);
     await this.runClearOldMessages();
@@ -86,7 +90,7 @@ export class SessionStorageTransport extends AbstractTransport {
   private setMessageItem(message: string, date: Date) {
     const key = `${this.keyPrefix}_msg_${date.getTime()}`;
     const msgObject: ClientMessage = {
-      date,
+      date: date.toISOString(),
       message,
     };
     const value = JSON.stringify(msgObject);
@@ -113,19 +117,15 @@ export class SessionStorageTransport extends AbstractTransport {
     const keys = this.getKeys(`${this.keyPrefix}_msg_`);
     keys.forEach((key) => {
       const value = localStorage.getItem(key);
-      try {
-        if (value) {
-          const msgObject: ClientMessage = JSON.parse(value);
-          const now = new Date();
-          const dateStr = msgObject?.date;
-          const date = new Date(dateStr);
-          if (!date || now.getTime() - date.getTime() > this.messageExpiredTime) {
-            this.removeItem(key);
-          }
-        } else {
+      if (value) {
+        const msgObject: ClientMessage = JSON.parse(value);
+        const now = new Date();
+        const date = new Date(msgObject.date);
+        if (now.getTime() - date.getTime() > this.messageExpiredTime) {
           this.removeItem(key);
         }
-      } finally {
+      } else {
+        this.removeItem(key);
       }
     });
     this.lastClearTime = new Date();
@@ -148,21 +148,17 @@ export class SessionStorageTransport extends AbstractTransport {
     let maxTime = this.messageTime;
     keys.forEach((key) => {
       const value = localStorage.getItem(key);
-      try {
-        if (value) {
-          const msgObject: ClientMessage = JSON.parse(value);
-          const dateStr = msgObject?.date;
-          const date = new Date(dateStr);
-          if (date > this.messageTime) {
-            this.onMessage(msgObject.message);
-            if (date > maxTime) {
-              maxTime = date;
-            }
+      if (value) {
+        const msgObject: ClientMessage = JSON.parse(value);
+        const date = new Date(msgObject.date);
+        if (date > this.messageTime) {
+          this.onMessage(msgObject.message);
+          if (date > maxTime) {
+            maxTime = date;
           }
-        } else {
-          this.removeItem(key);
         }
-      } finally {
+      } else {
+        this.removeItem(key);
       }
     });
     this.messageTime = maxTime;

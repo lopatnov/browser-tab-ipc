@@ -1,4 +1,4 @@
 export interface ClientMessage {
-    date: Date;
+    date: string;
     message: string;
 }

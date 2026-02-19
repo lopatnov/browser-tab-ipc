@@ -1,17 +1,17 @@
 module.exports = {
-    presets: [
-      ['@babel/preset-env', {
-        targets: {
-          node: 'current'
-        }
-      }],
-      ['@babel/preset-typescript', {
-        allExtensions: true,
-        allowDeclareFields: true,
-      }]
-    ],
-    "plugins": [
-      "@babel/proposal-class-properties",
-			"@babel/proposal-object-rest-spread",
-    ]
-  };
+  presets: [
+    ['@babel/preset-env', {
+      targets: {
+        node: '18',
+      },
+    }],
+    ['@babel/preset-typescript', {
+      allExtensions: true,
+      allowDeclareFields: true,
+    }],
+  ],
+  plugins: [
+    '@babel/plugin-transform-class-properties',
+    '@babel/plugin-transform-object-rest-spread',
+  ],
+};

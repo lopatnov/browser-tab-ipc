@@ -38,6 +38,9 @@ export class BrowserTabIPC extends AbstractTransport {
   }
 
   public connect(options?: ConnectionOptions): Promise<ConnectionState> {
+    if (this.transport) {
+      return Promise.resolve({type: this.transport.transportType ?? null, connected: true});
+    }
     this.extendOptions(options);
     return this.connectTransport(this.options).then((state) => {
       this.subscribeTransport();
@@ -102,9 +105,9 @@ export class BrowserTabIPC extends AbstractTransport {
     this.removeAllListeners(EventMessage);
   }
 
-  public postMessage(message: any): Promise<void> {
+  public async postMessage(message: any): Promise<void> {
     if (!this.transport) {
-      this.connect();
+      await this.connect();
     }
     return this.transport!.postMessage(message);
   }

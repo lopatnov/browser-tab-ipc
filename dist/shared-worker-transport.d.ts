@@ -9,7 +9,7 @@ export declare class SharedWorkerTransport extends AbstractTransport {
     readonly transportType = TransportType.sharedWorker;
     private throwIfNotSupported;
     connect(options?: ConnectionOptions): Promise<ConnectionState>;
-    throwIfNotWorkerUri(options?: ConnectionOptions): void;
+    private throwIfNotWorkerUri;
     private getConnectionState;
     private createWorker;
     private isFileExists;

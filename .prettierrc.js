@@ -1,5 +1,4 @@
 module.exports = {
-  extends: ["plugin:prettier/recommended"],
   bracketSpacing: false,
   tabWidth: 2,
   useTabs: false,

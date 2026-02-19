@@ -31,7 +31,7 @@ export class SharedWorkerTransport extends AbstractTransport {
         this.onConnected(state);
         return state;
       }
-    } catch (ex: any) {
+    } catch (ex: unknown) {
       state = this.getConnectionState();
       state.error = ex;
       this.onConnectionError(state);
@@ -39,7 +39,7 @@ export class SharedWorkerTransport extends AbstractTransport {
     throw state;
   }
 
-  throwIfNotWorkerUri(options?: ConnectionOptions) {
+  private throwIfNotWorkerUri(options?: ConnectionOptions) {
     if (options?.sharedWorkerUri) return;
     throw new Error('Worker URI is not defined');
   }
@@ -64,6 +64,8 @@ export class SharedWorkerTransport extends AbstractTransport {
     return new Promise((resolve) => {
       const xhr = new XMLHttpRequest();
       xhr.open('HEAD', url);
+      xhr.timeout = 5000;
+      xhr.ontimeout = () => resolve(false);
       xhr.send();
       xhr.onload = () => {
         resolve(xhr.status < 400);

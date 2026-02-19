@@ -1,25 +1,22 @@
 {
   "compilerOptions": {
-    "moduleResolution": "node",
-    // "target": "ESNext",
-    // "module": "ESNext",
-    "target": "es5",
+    "moduleResolution": "Bundler",
+    "target": "es2019",
     "module": "es2015",
-    "lib": ["es2015", "es2016", "es2017", "dom", "WebWorker", "ScriptHost"],
+    "lib": ["es2015", "es2016", "es2017", "es2018", "es2019", "dom", "WebWorker", "ScriptHost"],
     "allowJs": true,
     "strict": true,
     "sourceMap": true,
     "declaration": true,
-    //"emitDeclarationOnly": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
     "declarationDir": "dist",
-    "outDir": "dist/lib",
-    "typeRoots": ["node_modules/@types"]
+    "outDir": "dist/lib"
   },
   "include": ["src"]
 }

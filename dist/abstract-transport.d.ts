@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import EventEmitter from 'events';
 import { ConnectionOptions } from './connection-options';
 import { ConnectionState } from './connection-state';
@@ -9,7 +8,7 @@ export declare abstract class AbstractTransport extends EventEmitter {
     protected onConnected(state: ConnectionState): void;
     protected onConnectionError(state: ConnectionState): void;
     protected onDisconnected(state: ConnectionState): void;
-    protected onMessage(state: any): void;
+    protected onMessage(message: unknown): void;
     /**
      * Connected event. It executes callback after establishing connection
      * @param {Action1<ConnectionState>} callback A function with ConnectionState param

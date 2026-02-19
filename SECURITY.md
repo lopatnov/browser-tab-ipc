@@ -4,13 +4,11 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.x.x   | :white_check_mark: |
+| 2.x.x   | :white_check_mark: |
+| 1.x.x   | :x:                |
 
 ## Reporting a Vulnerability
 
-Create an [issue][issue] to report a vulnerability, please.
-
-Go to <https://github.com/My-Templates/TypeScript-Library/issues>, create `New issue`, describe the vulnerability as well as possible. When I read the vulnerability description, I'll give a feedback on futher actions.
-
-[issue]: https://github.com/My-Templates/TypeScript-Library/issues
-
+Please report security vulnerabilities via
+[GitHub Security Advisories](https://github.com/lopatnov/browser-tab-ipc/security/advisories/new)
+— do NOT open a public issue for security vulnerabilities.

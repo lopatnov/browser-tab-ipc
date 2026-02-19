@@ -1,222 +1,319 @@
-# @lopatnov/browser-tab-ipc [![Twitter][twitterbage]][twitter] [![LinkedIn][linkedinbage]][linkedin]
+# browser-tab-ipc
 
-[![npm](https://img.shields.io/npm/dt/@lopatnov/browser-tab-ipc)](https://www.npmjs.com/package/@lopatnov/browser-tab-ipc)
-[![NPM version](https://badge.fury.io/js/%40lopatnov%2Fbrowser-tab-ipc.svg)](https://www.npmjs.com/package/@lopatnov/browser-tab-ipc)
+> Lightweight cross-tab messaging library for TypeScript / JavaScript.
+> Exchange messages between browser tabs with automatic transport selection and graceful fallback.
+
+[![npm downloads](https://img.shields.io/npm/dt/@lopatnov/browser-tab-ipc)](https://www.npmjs.com/package/@lopatnov/browser-tab-ipc)
+[![npm version](https://badge.fury.io/js/%40lopatnov%2Fbrowser-tab-ipc.svg)](https://www.npmjs.com/package/@lopatnov/browser-tab-ipc)
 [![License](https://img.shields.io/github/license/lopatnov/browser-tab-ipc)](https://github.com/lopatnov/browser-tab-ipc/blob/master/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/lopatnov/browser-tab-ipc)](https://github.com/lopatnov/browser-tab-ipc/issues)
-[![GitHub forks](https://img.shields.io/github/forks/lopatnov/browser-tab-ipc)](https://github.com/lopatnov/browser-tab-ipc/network)
 [![GitHub stars](https://img.shields.io/github/stars/lopatnov/browser-tab-ipc)](https://github.com/lopatnov/browser-tab-ipc/stargazers)
-![GitHub top language](https://img.shields.io/github/languages/top/lopatnov/browser-tab-ipc)
 
-[![Build and Test package](https://github.com/lopatnov/browser-tab-ipc/actions/workflows/build-and-test-package.yml/badge.svg)](https://github.com/lopatnov/browser-tab-ipc/tree/master/tests)
-[![Publish NPM package](https://github.com/lopatnov/browser-tab-ipc/actions/workflows/npm-publish-package.yml/badge.svg)](https://github.com/lopatnov/browser-tab-ipc/releases)
-[![Dependencies](https://img.shields.io/librariesio/release/npm/@lopatnov/browser-tab-ipc)](https://www.npmjs.com/package/@lopatnov/browser-tab-ipc?activeTab=dependencies)
+---
 
-With this client technology, you can exchange messages between browser tabs. This is a bus network among browser tabs, inter-process communication mechanism between browser tabs. This technology allows to create a chat between browser tabs. It allows create features to optimize the performance of high-demand applications, decrease amount of http requests or socket connections. It also allows synchronize changes in different browser tabs.
+## Browser Support
 
-This technology supports two transport type connections. The messages can be transferred through a storage or through a JavaScript worker. Transport technology can be chosen automatically.
+| Transport        | Chrome | Firefox | Safari | Edge | Notes                          |
+| ---------------- | ------ | ------- | ------ | ---- | ------------------------------ |
+| BroadcastChannel | 54+    | 38+     | 15.4+  | 79+  | Default — fastest, same-origin |
+| SharedWorker     | 4+     | 29+     | 16+    | 79+  | Cross-origin capable           |
+| SessionStorage   | all    | all     | all    | all  | Universal fallback             |
 
-## Install
+---
 
-[![https://nodei.co/npm/@lopatnov/browser-tab-ipc.png?downloads=true&downloadRank=true&stars=true](https://nodei.co/npm/@lopatnov/browser-tab-ipc.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/@lopatnov/browser-tab-ipc)
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [How It Works](#how-it-works)
+- [API Reference](#api-reference)
+  - [class BrowserTabIPC](#class-browsertabipc)
+  - [ConnectionOptions](#connectionoptions)
+  - [ConnectionState](#connectionstate)
+  - [TransportType](#transporttype)
+  - [Events](#events)
+- [SharedWorker Setup](#sharedworker-setup)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Installation
+
+**npm:**
 
 ```shell
 npm install @lopatnov/browser-tab-ipc
 ```
 
-[Browser](//lopatnov.github.io/browser-tab-ipc/dist/library.js)
+**yarn:**
+
+```shell
+yarn add @lopatnov/browser-tab-ipc
+```
+
+**CDN (UMD, no bundler required):**
 
 ```html
-<script src="https://lopatnov.github.io/browser-tab-ipc/dist/library.min.js"></script>
-
-<!-- Example: how to use in browser -->
-<script>
-  //...
-  var BrowserTabIPC = browserTabIpc.BrowserTabIPC;
-  ipc = new BrowserTabIPC();
-  ipc.message(function (message) {
-    console.log(message);
-  });
-  ipc
-    .connect({
-      sharedWorkerUri: '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js', // Please copy this file `dist/ipc-worker.js` to your project and replace this url
-    })
-    .then(function (state) {
-      console.log(state);
-    });
-  var id = Math.trunc(Math.random() * 10000);
-  setInterval(() => {
-    ipc.postMessage('Hello browser Tab! I am page with ID: ' + id);
-  }, 200);
-  //...
-</script>
+<script src="https://lopatnov.github.io/browser-tab-ipc/dist/library.umd.min.js"></script>
 ```
 
-## Post Install
+---
 
-Copy [~/node_modules/@lopatnov/browser-tab-ipc/dist/ipc-worker.js](./dist/ipc-worker.js) file to your project to use Worker transport technology and avoid CORS issues. Provide the path to this file for Worker transport connection.
-
-## Import package to the project
-
-### TypeScript
+## Quick Start
 
 ```typescript
-import {BrowserTabIPC, TransportType, ConnectionState} from '@lopatnov/browser-tab-ipc';
-```
+import {BrowserTabIPC} from '@lopatnov/browser-tab-ipc';
 
-### JavaScript
+const ipc = new BrowserTabIPC();
 
-```javascript
-var library = require('@lopatnov/browser-tab-ipc');
-var BrowserTabIPC = library.BrowserTabIPC;
-var TransportType = library.TransportType;
-var ConnectionState = library.ConnectionState;
-```
-
-## API
-
-### class [BrowserTabIPC][browsertabipc]
-
-Provides methods to connect/disconnect ipc technology using one of some possible transports and send a message through it.
-
-This class extends from [EventEmitter][eventemitter] class and can use `EventConnected`, `EventConnectionError`, `EventDisconnected`, `EventMessage` events, however it's not obligatory.
-
-```ts
-import {EventConnected, EventConnectionError, EventDisconnected, EventMessage} from '@lopatnov/browser-tab-ipc';
-
-ipc.on(EventConnected, (state) => {
-  console.log('connected', state);
+// Listen for messages from other tabs
+ipc.message((data) => {
+  console.log('Received:', data);
 });
+
+// Connect and send
+await ipc.connect();
+await ipc.postMessage({event: 'tab-opened', tabId: crypto.randomUUID()});
 ```
 
-#### constructor(options?: [ConnectionOptions][connectionoptions])
+Open the same page in multiple tabs — every tab receives the message instantly.
 
-Creates an instance of [BrowserTabIPC][browsertabipc] class.
+---
 
-- **options?: [ConnectionOptions][connectionoptions]** Optional parameter `options` provides connection options to create a new instance.
+## How It Works
 
-```ts
+`BrowserTabIPC` tries each transport in order and uses the first one that connects successfully:
+
+```
+BroadcastChannel  →  SharedWorker  →  SessionStorage
+    (fastest)          (flexible)       (always works)
+```
+
+You can override this by specifying a single transport or a custom fallback list via `ConnectionOptions`.
+
+---
+
+## API Reference
+
+### class BrowserTabIPC
+
+`BrowserTabIPC` extends Node's `EventEmitter` and provides a clean connect / send / receive interface.
+
+#### `new BrowserTabIPC(options?: ConnectionOptions)`
+
+Creates an instance. Options set here apply to all subsequent `connect()` calls.
+
+```typescript
+import {BrowserTabIPC, TransportType} from '@lopatnov/browser-tab-ipc';
+
+// Default — auto-selects from all three transports
+const ipc = new BrowserTabIPC();
+
+// Force a single transport
+const ipc = new BrowserTabIPC({
+  transportTypes: TransportType.broadcastChannel,
+});
+
+// Custom fallback chain
 const ipc = new BrowserTabIPC({
   transportTypes: [TransportType.sharedWorker, TransportType.sessionStorage],
+  sharedWorkerUri: '/ipc-worker.js',
 });
 ```
 
-#### connect(options?: [ConnectionOptions][connectionoptions]): Promise<[ConnectionState][connectionstate]>
+#### `connect(options?: ConnectionOptions): Promise<ConnectionState>`
 
-Connects [BrowserTabIPC][browsertabipc] instance to a bus network among browser tabs using one of possible transport provided in constructor.
+Establishes the connection. Options passed here are merged with constructor options.
 
-- **options?: [ConnectionOptions][connectionoptions]** Optional parameter `options` extends connection options to IPC instance.
-  - **transportTypes?: [TransportType][transporttype] | [TransportType][transporttype][];** An enum value or array of enum [TransportType][transporttype]. That's possible transports that IPC technology can use.
-  - **sharedWorkerUri?: string;** Worker transport option. A link to IPC worker.
-  - **storageKey?: string;** Storage transport option. A key, that IPC technology uses in local storage to identify IPC messages
-  - **storageExpiredTime?: number;** Storage transport option. Timeout constant that technology uses to remove old messages
-
-**returns Promise<[ConnectionState][connectionstate]>** a state of connection.
-
-- **type: [TransportType][transporttype] | null;** Used transport type
-- **connected: boolean;** Is connected?
-- **error?: any;** An error
-
-[BrowserTabIPC][browsertabipc] also have `defaultWorkerUri` static variable, that uses when `sharedWorkerUri` option wasn't provided.
-
-```ts
+```typescript
 const state = await ipc.connect({
-  sharedWorkerUri: '//lopatnov.github.io/browser-tab-ipc/dist/ipc-worker.js',
-  storageKey: 'ipc',
-  storageExpiredTime: 30000,
+  sharedWorkerUri: '/dist/ipc-worker.js',
+  storageKey: 'my-app-channel',
+  storageExpiredTime: 30_000,
+});
+
+console.log(state.connected); // true
+console.log(state.type); // e.g. TransportType.broadcastChannel
+```
+
+#### `disconnect(): Promise<ConnectionState>`
+
+Closes the active connection and cleans up all listeners and timers.
+
+```typescript
+const state = await ipc.disconnect();
+console.log(state.connected); // false
+```
+
+#### `postMessage(message: any): Promise<void>`
+
+Broadcasts a serializable value to all connected tabs.
+
+```typescript
+await ipc.postMessage('ping');
+await ipc.postMessage({type: 'STORE_UPDATE', payload: {count: 42}});
+```
+
+#### Event subscription methods
+
+| Method                      | Trigger                                 |
+| --------------------------- | --------------------------------------- |
+| `message(callback)`         | A message was received from another tab |
+| `connected(callback)`       | Connection established successfully     |
+| `connectionError(callback)` | Connection attempt failed               |
+| `disconnected(callback)`    | Connection was closed                   |
+
+```typescript
+ipc.message((data) => console.log('Message:', data));
+ipc.connected((state) => console.log('Connected via', TransportType[state.type!]));
+ipc.connectionError((state) => console.error('Connection failed:', state.error));
+ipc.disconnected(() => console.log('Disconnected'));
+```
+
+You can also use the `EventEmitter` API directly with the exported event name constants:
+
+```typescript
+import {EventMessage, EventConnected, EventConnectionError, EventDisconnected} from '@lopatnov/browser-tab-ipc';
+
+ipc.on(EventMessage, (data) => {
+  /* ... */
+});
+ipc.once(EventConnected, (state) => {
+  /* ... */
 });
 ```
 
-#### disconnect(): Promise<[ConnectionState][connectionstate]>
+---
 
-Disconnects [BrowserTabIPC][browsertabipc] instance.
+### ConnectionOptions
 
-**returns Promise<[ConnectionState][connectionstate]>** a state of connection.
+| Option               | Type                               | Default                 | Description                                     |
+| -------------------- | ---------------------------------- | ----------------------- | ----------------------------------------------- |
+| `transportTypes`     | `TransportType \| TransportType[]` | All three, in order     | Transport(s) to try, left to right              |
+| `sharedWorkerUri`    | `string`                           | GitHub CDN fallback URL | URL to `ipc-worker.js` (SharedWorker transport) |
+| `storageKey`         | `string`                           | `'ipc'`                 | Namespace prefix for SessionStorage keys        |
+| `storageExpiredTime` | `number`                           | `30000`                 | Message TTL in milliseconds (SessionStorage)    |
 
-```ts
-ipc.disconnect();
+---
+
+### ConnectionState
+
+Returned by `connect()` and `disconnect()`, and passed to event callbacks.
+
+| Field       | Type                    | Description                                   |
+| ----------- | ----------------------- | --------------------------------------------- |
+| `type`      | `TransportType \| null` | Active transport, or `null` if none connected |
+| `connected` | `boolean`               | Whether the connection is currently active    |
+| `error?`    | `unknown`               | Error detail when a connection attempt fails  |
+
+---
+
+### TransportType
+
+```typescript
+import {TransportType} from '@lopatnov/browser-tab-ipc';
+
+TransportType.broadcastChannel; // BroadcastChannel API
+TransportType.sharedWorker; // SharedWorker
+TransportType.sessionStorage; // SessionStorage events
 ```
 
-#### postMessage(message: `any`): Promise<`void`>
+---
 
-Sends a message of any serializable type.
+### Events
 
-```ts
-ipc.postMessage('Hello browser Tab!');
+| Constant               | When emitted                       |
+| ---------------------- | ---------------------------------- |
+| `EventConnected`       | A transport connected successfully |
+| `EventConnectionError` | A transport failed to connect      |
+| `EventDisconnected`    | The connection was closed          |
+| `EventMessage`         | A message arrived from another tab |
+
+---
+
+## SharedWorker Setup
+
+The SharedWorker transport requires a worker script served from **your own origin** to avoid CORS issues. Copy the bundled file into your project:
+
+```shell
+cp node_modules/@lopatnov/browser-tab-ipc/dist/ipc-worker.js public/
 ```
 
-#### connected(callback: [Action1][action1]<[ConnectionState][connectionstate]>)
+Then point `connect()` to it:
 
-Adds a callback to `EventConnected` event.
-
-```ts
-ipc.connected(function (connectionState) {
-  console.log('Connected. Current connection state is ', connectionState);
-});
+```typescript
+await ipc.connect({sharedWorkerUri: '/ipc-worker.js'});
 ```
 
-#### connectionError(callback: [Action1][action1]<[ConnectionState][connectionstate]>)
+> Without this step, the library falls back to a GitHub-hosted worker — which only works on the same origin as the CDN.
 
-Adds a callback to `EventConnectionError` event.
-
-```ts
-ipc.connectionError(function (connectionState) {
-  console.log('Connection error. Current connection state is ', connectionState);
-});
-```
-
-#### disconnected(callback: [Action1][action1]<[ConnectionState][connectionstate]>)
-
-Adds a callback to `EventDisconnected` event.
-
-```ts
-ipc.disconnected(function (connectionState) {
-  console.log('Disconnected. Current connection state is ', connectionState);
-});
-```
-
-#### message(callback: [Action1][action1]<`any`>)
-
-Adds a callback to `EventMessage` event.
-
-```ts
-ipc.message(function (message) {
-  console.log('Received a message: ', message);
-});
-```
+---
 
 ## Troubleshooting
 
-> Module '"events"' can only be default-imported using the 'allowSyntheticDefaultImports' flag
+**`Module '"events"' can only be default-imported using the 'allowSyntheticDefaultImports' flag`**
 
-Edit `tsconfig.json`, set "allowSyntheticDefaultImports": true,
+Add to `tsconfig.json`:
 
-## Donate
+```json
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true
+  }
+}
+```
 
-[![Charity Health][charity_health]][dobro]
-[![LinkedIn Volunteer][prykhodkobage]][prykhodko]
+**Messages are not received in other tabs**
 
-Open source software is just a hobby. I am making it just for fun. A small amount of help will be more significant for charitable foundations. I propose to pay attention to the various local funds or to the volunteers in my country. I hope this will make someone's life better.
+- All tabs must be on the **same origin** (protocol + host + port).
+- BroadcastChannel and SessionStorage are strictly same-origin.
+- SharedWorker can bridge origins if the worker file is served from the target origin.
 
-## Rights and Agreements [![LinkedIn][linkedinbage]][linkedin]
+**SharedWorker fails silently**
 
-Contact me in LinkedIn, I will consider profitable business offers. I am Computer Software Engineer, individual entrepreneur. I develop software of various complexity for the web, desktop, mobile and embedded devices. I have expertise in web development using .NET, Angular and React frameworks, Microsoft and Google technologies, working with the North American and European markets through reseller companies by B2B business model. I was a part of development teams and worked independently with enterprise projects, digital technologies, fintech projects, real estate, barcode software and petroleum industry. I would like to note that I have not bad analytical skills. I'm improving my skills continuously and I have recommendations.
+- Open **DevTools → Application → Shared Workers** and check for errors.
+- Verify the `sharedWorkerUri` path is accessible from the browser (check for 404).
+- If the file is missing, copy `ipc-worker.js` to your `public/` folder as shown above.
 
-License [Apache-2.0](https://github.com/lopatnov/browser-tab-ipc/blob/master/LICENSE)
+**Connection established but no messages arrive**
 
-Copyright 2022 Oleksandr Lopatnov
+- Both tabs must call `connect()` before any messages are sent.
+- A tab does **not** receive its own messages — only other tabs do.
 
-[linkedinbage]: https://img.shields.io/badge/LinkedIn-lopatnov-informational?style=social&logo=linkedin
-[linkedin]: https://www.linkedin.com/in/lopatnov/
-[twitterbage]: https://img.shields.io/twitter/url?url=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2F%40lopatnov%2Fbrowser-tab-ipc
-[twitter]: https://twitter.com/intent/tweet?text=I%20want%20to%20share%20TypeScript%20library:&url=https%3A%2F%2Fwww.npmjs.com%2Fpackage%2F%40lopatnov%2Fbrowser-tab-ipc
-[eventemitter]: https://nodejs.org/dist/v11.13.0/docs/api/events.html
+---
+
+## Contributing
+
+Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
+
+- Bug reports → [open an issue](https://github.com/lopatnov/browser-tab-ipc/issues)
+- Security vulnerabilities → [GitHub Security Advisories](https://github.com/lopatnov/browser-tab-ipc/security/advisories/new) _(do not use public issues)_
+- Questions → [Discussions](https://github.com/lopatnov/browser-tab-ipc/discussions)
+- Found it useful? A [star on GitHub](https://github.com/lopatnov/browser-tab-ipc) helps others discover the project
+
+---
+
+## Built With
+
+- [TypeScript](https://www.typescriptlang.org/) — strict typing throughout
+- [Rollup](https://rollupjs.org/) — bundled to ESM, CJS, and UMD formats
+- [BroadcastChannel API](https://developer.mozilla.org/en-US/docs/Web/API/BroadcastChannel) — primary transport
+- [SharedWorker API](https://developer.mozilla.org/en-US/docs/Web/API/SharedWorker) — cross-tab shared execution context
+- [Web Storage API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API) — universal fallback transport
+- [Node.js EventEmitter](https://nodejs.org/api/events.html) — event-driven API
+- [Babel](https://babeljs.io/) — TypeScript transpilation pipeline for tests
+- [Puppeteer](https://pptr.dev/) + [Jest](https://jestjs.io/) — cross-tab integration testing in a real browser
+
+---
+
+## License
+
+[Apache-2.0](LICENSE) © 2019–2026 [Oleksandr Lopatnov](https://github.com/lopatnov) · [LinkedIn](https://www.linkedin.com/in/lopatnov/)
+
+[eventemitter]: https://nodejs.org/api/events.html
 [browsertabipc]: ./src/browser-tab-ipc.ts
 [transporttype]: ./src/transport-type.enum.ts
 [connectionoptions]: ./src/connection-options.ts
 [connectionstate]: ./src/connection-state.ts
-[action1]: ./src/functors.ts
-[prykhodkobage]: https://img.shields.io/badge/Eco%20Activist-Artyom%20Prykhodko-informational?style=flat-square&logo=linkedin
-[prykhodko]: https://www.linkedin.com/in/artyom-prykhodko-998708125/
-[dobro]: https://dobro.ua/en/projects/category/zdorovia?page=1&category=zdorovia&tag=28
-[charity_health]: https://img.shields.io/badge/Charity%20Health-Dobro-red?style=flat-square&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABBVBMVEUAAAAAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWQAuWT///+PPo6DAAAAVXRSTlMAAA4wOR0CAUe/7vPbfA9K5PyKBAPF9PL47f7qN2QiW0V+mpvejJWBnaBanDWLpUva3aGemaa7o1d7rY2nXt/G/eszLmoUZ4mAT+ePBU3D3IIREDEe6n6MQgAAAAFiS0dEVgoN6YkAAAAHdElNRQfkCAcPCB1MJSGgAAAAlElEQVQY02NgIB0wMjIxs7CyMcIF2Dk4ubh5ePngIvwCoUAgKCTMyMjOyCbCziAqJi4hKSUlLSMrJ6+gqKTMoKKqqqauoaGppa2jq6epb8BgqGFkbGJqZm6hZmllbWNrx2AfKuXgIBXq6OSs6uLq5u7B4OkFMtTB24cRCEC2sPn6cXH7BwQyIhwWFMwSIsJIkm9QAQBayRNRV4rFmQAAACV0RVh0ZGF0ZTpjcmVhdGUAMjAyMC0wOC0wN1QxNTowODoyOSswMjowMBaHG7YAAAAldEVYdGRhdGU6bW9kaWZ5ADIwMjAtMDgtMDdUMTU6MDg6MjkrMDI6MDBn2qMKAAAAV3pUWHRSYXcgcHJvZmlsZSB0eXBlIGlwdGMAAHic4/IMCHFWKCjKT8vMSeVSAAMjCy5jCxMjE0uTFAMTIESANMNkAyOzVCDL2NTIxMzEHMQHy4BIoEouAOoXEXTyQjWVAAAAAElFTkSuQmCC
