@@ -67,6 +67,10 @@ export class SessionStorageTransport extends AbstractTransport {
   }
 
   public async disconnect(): Promise<ConnectionState> {
+    if (this.clearOldMessagesTimeout) {
+      clearTimeout(this.clearOldMessagesTimeout);
+      this.clearOldMessagesTimeout = undefined;
+    }
     this.clearOldMessages();
     removeEventListener('beforeunload', this.beforeunloadHandler);
     removeEventListener('storage', this.storageHandler);
@@ -77,7 +81,7 @@ export class SessionStorageTransport extends AbstractTransport {
   }
 
   public async postMessage(message: any): Promise<void> {
-    if (!this.connected) return;
+    if (!this.isConnected) return;
     const date = new Date();
     this.setMessageItem(message, date);
     await this.runClearOldMessages();

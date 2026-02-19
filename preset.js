@@ -1,7 +1,4 @@
-const ts_presets = require('ts-jest/presets');
-const puppeteer_preset = require('jest-puppeteer/jest-preset')
+const {defaults: tsjestDefaults} = require('ts-jest/presets');
+const puppeteerPreset = require('jest-puppeteer/jest-preset');
 
-module.exports = Object.assign(
-    ts_presets,
-    puppeteer_preset
-)
+module.exports = Object.assign({}, tsjestDefaults, puppeteerPreset);

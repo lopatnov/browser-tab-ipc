@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import EventEmitter from 'events';
 import { ConnectionOptions } from './connection-options';
 import { ConnectionState } from './connection-state';

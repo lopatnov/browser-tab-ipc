@@ -102,9 +102,9 @@ export class BrowserTabIPC extends AbstractTransport {
     this.removeAllListeners(EventMessage);
   }
 
-  public postMessage(message: any): Promise<void> {
+  public async postMessage(message: any): Promise<void> {
     if (!this.transport) {
-      this.connect();
+      await this.connect();
     }
     return this.transport!.postMessage(message);
   }

@@ -1,6 +1,6 @@
 # Contributions Welcome
 
-Thanks for your interest in contributing to **TypeScript-Library**! Contributing to open source projects like this one can be a rewarding way to learn, teach, and build experience. Not only that, contributing is a great way to get involved with _social coding_. We are excited to see what amazing contributions you will make, as well as how your contributions will benefit others.
+Thanks for your interest in contributing to **@lopatnov/browser-tab-ipc**! Contributing to open source projects like this one can be a rewarding way to learn, teach, and build experience. Not only that, contributing is a great way to get involved with _social coding_. We are excited to see what amazing contributions you will make, as well as how your contributions will benefit others.
 
 If you are new to contributing to open source projects, the process can be intimidating. Not to worry! To help ensure both you and the community get the most out of your contributions, we've put together the following guidelines.
 
@@ -71,31 +71,30 @@ If you don't see your idea listed, and you think it fits into the goals of the p
 
 To start making a contribution:
 
-1. `fork` the project repository by clicking the **fork** button on GitHub.![fork](https://help.github.com/assets/images/help/repository/fork_button.jpg)
+1. `fork` the project repository by clicking the **fork** button on GitHub.
 
 1. `clone` your forked repository (_noob tip: the actual command you type in is everything after the $_):
 
    ```shell
-   $ git clone https://github.com/<YOUR-USERNAME>/TypeScript-Library
+   $ git clone https://github.com/<YOUR-USERNAME>/browser-tab-ipc
    ```
 
 1. Add a new remote that points to the original project so you can sync project changes with your local copy:
 
    ```shell
-   $ git remote add upstream https://github.com/my-templates.github.io/TypeScript-Library
+   $ git remote add upstream https://github.com/lopatnov/browser-tab-ipc
    ```
 
-1. Pull upstream changes into your local repositories `development` branch:
+1. Pull upstream changes into your local repository's `master` branch:
 
    ```shell
-   $ git checkout development
-   $ git pull upstream development && git push origin development
+   $ git checkout master
+   $ git pull upstream master && git push origin master
    ```
 
-1. Create a new branch from the `development` branch:
-![branch](https://help.github.com/assets/images/help/branch/branch-selection-dropdown.png)
+1. Create a new branch from the `master` branch:
 
-   **IMPORTANT:** Make sure you are on the `development` branch first.
+   **IMPORTANT:** Make sure you are on the `master` branch first.
 
    ```shell
    $ git checkout -b <YOUR-NEW-BRANCH>
@@ -107,7 +106,7 @@ To start making a contribution:
 
 1. Add or change documentation as needed.
 
-1. After commiting changes, push your branch to your fork on Github, the remote `origin`:
+1. After committing changes, push your branch to your fork on Github, the remote `origin`:
 
    **IMPORTANT:** Your commit message should be in present tense and should describe what the commit, when applied, does to the code - not what you did to the code.
 
@@ -115,18 +114,15 @@ To start making a contribution:
    $ git push -u origin <YOUR-NEW-BRANCH>
    ```
 
-1. From your forked GitHub repository, open a pull request in the branch containing your contributions. Target the project's `development` branch for the pull request.
+1. From your forked GitHub repository, open a pull request in the branch containing your contributions. Target the project's `master` branch for the pull request.
 
 1. At this point, your contribution has been submitted for review. Please be patient while your contribution is being reviewed as this can take some time. Meanwhile, if there are questions or comments on your contribution, please respond and/or update with future commits.
 
 1. Once the pull request is approved and merged, you can pull the changes from `upstream` to your local repository and delete your extra branch(es).
 
-1. Don't forget to check out more [about] this project
-
 Happy contributing!
 
 [code-of-conduct]: ./CODE_OF_CONDUCT.md
-[about]: https://my-templates.github.io/TypeScript-Library/
-[wiki]: https://github.com/My-Templates/TypeScript-Library/wiki
-[issues]: https://github.com/my-templates.github.io/TypeScript-Library/issues
-[pull-requests]: https://github.com/my-templates.github.io/TypeScript-Library/pulls
+[wiki]: https://github.com/lopatnov/browser-tab-ipc/wiki
+[issues]: https://github.com/lopatnov/browser-tab-ipc/issues
+[pull-requests]: https://github.com/lopatnov/browser-tab-ipc/pulls

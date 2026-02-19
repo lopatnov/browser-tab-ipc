@@ -1,4 +1,8 @@
 $(function () {
+  function esc(s) {
+    return $('<span>').text(String(s)).html();
+  }
+
   let ipc;
 
   function connect(transportTypes) {
@@ -10,7 +14,7 @@ $(function () {
 
     ipc.message(function (e) {
       console.log('Message:', e);
-      $('#history').append($('<li>').html(`<mark class="tertiary">Re:</mark> <span class="re">${e}</span>`));
+      $('#history').append($('<li>').html(`<mark class="tertiary">Re:</mark> <span class="re">${esc(e)}</span>`));
     });
 
     ipc.connected((state) => {
@@ -31,11 +35,11 @@ $(function () {
         sharedWorkerUri: ipcUrl,
       })
       .then(function (e) {
-        $('#history').append($('<li>').html(`Connected: ${e.connected}`));
+        $('#history').append($('<li>').html(`Connected: ${esc(e.connected)}`));
       })
       .catch(function (e) {
         console.error(e);
-        $('#history').append($('<li>').html(`<pre>Connection Error: \n${JSON.stringify(e).replace(/\\n/g, '\n')}</pre>`));
+        $('#history').append($('<li>').html(`<pre>Connection Error: \n${esc(JSON.stringify(e).replace(/\\n/g, '\n'))}</pre>`));
       });
   }
 
@@ -81,7 +85,7 @@ $(function () {
 
   function rememberMyText() {
     const value = $('#text').val();
-    $('#history').append($('<li>').html(`<mark class="secondary">Me:</mark> <span class="me">${value}</span>`));
+    $('#history').append($('<li>').html(`<mark class="secondary">Me:</mark> <span class="me">${esc(value)}</span>`));
   }
 
   function clear() {

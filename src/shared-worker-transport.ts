@@ -39,7 +39,7 @@ export class SharedWorkerTransport extends AbstractTransport {
     throw state;
   }
 
-  throwIfNotWorkerUri(options?: ConnectionOptions) {
+  private throwIfNotWorkerUri(options?: ConnectionOptions) {
     if (options?.sharedWorkerUri) return;
     throw new Error('Worker URI is not defined');
   }

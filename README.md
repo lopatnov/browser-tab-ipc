@@ -8,13 +8,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/lopatnov/browser-tab-ipc)](https://github.com/lopatnov/browser-tab-ipc/stargazers)
 ![GitHub top language](https://img.shields.io/github/languages/top/lopatnov/browser-tab-ipc)
 
-[![Build and Test package](https://github.com/lopatnov/browser-tab-ipc/actions/workflows/build-and-test-package.yml/badge.svg)](https://github.com/lopatnov/browser-tab-ipc/tree/master/tests)
-[![Publish NPM package](https://github.com/lopatnov/browser-tab-ipc/actions/workflows/npm-publish-package.yml/badge.svg)](https://github.com/lopatnov/browser-tab-ipc/releases)
-[![Dependencies](https://img.shields.io/librariesio/release/npm/@lopatnov/browser-tab-ipc)](https://www.npmjs.com/package/@lopatnov/browser-tab-ipc?activeTab=dependencies)
-
 With this client technology, you can exchange messages between browser tabs. This is a bus network among browser tabs, inter-process communication mechanism between browser tabs. This technology allows to create a chat between browser tabs. It allows create features to optimize the performance of high-demand applications, decrease amount of http requests or socket connections. It also allows synchronize changes in different browser tabs.
 
-This technology supports two transport type connections. The messages can be transferred through a storage or through a JavaScript worker. Transport technology can be chosen automatically.
+This technology supports three transport types: BroadcastChannel API, SharedWorker, and SessionStorage. The messages can be transferred through any of these transports. Transport technology can be chosen automatically with an automatic fallback mechanism.
 
 ## Install
 
@@ -24,10 +20,10 @@ This technology supports two transport type connections. The messages can be tra
 npm install @lopatnov/browser-tab-ipc
 ```
 
-[Browser](//lopatnov.github.io/browser-tab-ipc/dist/library.js)
+[Browser UMD](//lopatnov.github.io/browser-tab-ipc/dist/library.umd.js)
 
 ```html
-<script src="https://lopatnov.github.io/browser-tab-ipc/dist/library.min.js"></script>
+<script src="https://lopatnov.github.io/browser-tab-ipc/dist/library.umd.min.js"></script>
 
 <!-- Example: how to use in browser -->
 <script>
@@ -204,7 +200,7 @@ Contact me in LinkedIn, I will consider profitable business offers. I am Compute
 
 License [Apache-2.0](https://github.com/lopatnov/browser-tab-ipc/blob/master/LICENSE)
 
-Copyright 2022 Oleksandr Lopatnov
+Copyright 2019–2026 Oleksandr Lopatnov
 
 [linkedinbage]: https://img.shields.io/badge/LinkedIn-lopatnov-informational?style=social&logo=linkedin
 [linkedin]: https://www.linkedin.com/in/lopatnov/
