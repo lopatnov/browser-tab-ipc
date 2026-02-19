@@ -7,7 +7,7 @@
           if ((e === null || e === void 0 ? void 0 : e.source) && e.source instanceof MessagePort) {
               const port = e.source;
               ports.add(port);
-              port.addEventListener('message', (ev) => {
+              port.onmessage = (ev) => {
                   const data = ev.data;
                   const cmd = data === null || data === void 0 ? void 0 : data.cmd;
                   switch (cmd) {
@@ -21,7 +21,7 @@
                               }
                           });
                   }
-              }, false);
+              };
               port.start();
           }
       };

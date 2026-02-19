@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>browser-tab-ipc demo</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <style>
+    :root {
+      --bg-deep: #0d1117;
+      --bg-card: #161b22;
+      --bg-input: #1c2128;
+      --border: #30363d;
+      --accent: #7c3aed;
+      --accent-hover: #6d28d9;
+      --msg-out: #1d4ed8;
+      --msg-in: #21262d;
+      --text-muted: #8b949e;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg-deep);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    /* ── Connect screen ─────────────────────────────── */
+    #connect-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem 1.5rem;
+      background: radial-gradient(ellipse at 60% 20%, #1a0533 0%, var(--bg-deep) 65%);
+    }
+
+    .page-layout {
+      display: flex;
+      align-items: flex-start;
+      gap: 3rem;
+      width: 100%;
+      max-width: 1080px;
+    }
+
+    /* ── Description column ─────────────────────────── */
+    .page-desc {
+      flex: 1;
+      min-width: 0;
+      padding-top: 0.5rem;
+    }
+
+    .hero-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #c4b5fd;
+      background: rgba(124, 58, 237, 0.15);
+      border: 1px solid rgba(124, 58, 237, 0.3);
+      border-radius: 999px;
+      padding: 0.2rem 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .hero-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #e6edf3;
+      margin-bottom: 0.4rem;
+      line-height: 1.15;
+    }
+
+    .hero-lead {
+      font-size: 1.05rem;
+      color: #adbac7;
+      margin-bottom: 1rem;
+    }
+
+    .hero-body {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      margin-bottom: 1.75rem;
+    }
+
+    .section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    /* How-to steps */
+    .how-to {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 1.75rem;
+      counter-reset: steps;
+    }
+
+    .how-to li {
+      counter-increment: steps;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      color: #adbac7;
+      margin-bottom: 0.6rem;
+    }
+
+    .how-to li::before {
+      content: counter(steps);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: rgba(124, 58, 237, 0.2);
+      border: 1px solid rgba(124, 58, 237, 0.4);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: #c4b5fd;
+      margin-top: 0.05rem;
+    }
+
+    /* Transport info */
+    .transport-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .transport-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.6rem 0.875rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 0.6rem;
+      font-size: 0.825rem;
+    }
+
+    .transport-item i {
+      font-size: 1rem;
+      color: #c4b5fd;
+      flex-shrink: 0;
+      margin-top: 0.1rem;
+    }
+
+    .transport-item strong {
+      display: block;
+      color: #e6edf3;
+      font-weight: 600;
+    }
+
+    .transport-item span {
+      color: var(--text-muted);
+    }
+
+    /* Links */
+    .hero-links {
+      display: flex;
+      gap: 0.75rem;
+    }
+
+    .hero-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.825rem;
+      font-weight: 500;
+      padding: 0.4rem 0.9rem;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
+    }
+
+    .hero-link.npm {
+      background: rgba(203, 28, 28, 0.12);
+      border: 1px solid rgba(203, 28, 28, 0.3);
+      color: #fca5a5;
+    }
+
+    .hero-link.npm:hover {
+      background: rgba(203, 28, 28, 0.22);
+    }
+
+    .hero-link.github {
+      background: rgba(139, 148, 158, 0.1);
+      border: 1px solid rgba(139, 148, 158, 0.25);
+      color: #adbac7;
+    }
+
+    .hero-link.github:hover {
+      background: rgba(139, 148, 158, 0.2);
+      color: #e6edf3;
+    }
+
+    /* ── Connect card ──────────────────────────────── */
+    .connect-card {
+      flex-shrink: 0;
+      width: 420px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 1.25rem;
+      padding: 2.25rem;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+    }
+
+    .connect-card .logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), #2563eb);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+      color: #fff;
+      margin-bottom: 1rem;
+    }
+
+    .connect-card h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #e6edf3;
+      margin-bottom: 0.2rem;
+    }
+
+    .connect-card .card-sub {
+      color: var(--text-muted);
+      font-size: 0.825rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .connect-card label {
+      color: #adbac7;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 0.3rem;
+      display: block;
+    }
+
+    .connect-card .form-control,
+    .connect-card .form-control:focus {
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      color: #e6edf3;
+      border-radius: 0.6rem;
+      font-size: 0.85rem;
+    }
+
+    .connect-card .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
+    }
+
+    .transport-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      margin-top: 0.35rem;
+    }
+
+    .transport-option {
+      position: relative;
+    }
+
+    .transport-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .transport-option label {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.55rem 0.75rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 0.6rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      font-size: 0.8rem;
+      color: #adbac7;
+      margin: 0;
+    }
+
+    .transport-option input[type="radio"]:checked + label {
+      border-color: var(--accent);
+      background: rgba(124, 58, 237, 0.12);
+      color: #c4b5fd;
+    }
+
+    .transport-option label:hover {
+      border-color: #6e7681;
+    }
+
+    .btn-connect {
+      width: 100%;
+      padding: 0.65rem;
+      background: var(--accent);
+      border: none;
+      border-radius: 0.6rem;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: background 0.15s, transform 0.1s;
+      margin-top: 0.25rem;
+    }
+
+    .btn-connect:hover { background: var(--accent-hover); }
+    .btn-connect:active { transform: scale(0.98); }
+
+    /* ── Responsive ───────────────────────────────── */
+    @media (max-width: 800px) {
+      .page-layout {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .hero-title { font-size: 1.8rem; }
+
+      .connect-card {
+        width: 100%;
+      }
+    }
+
+    /* ── Chat screen ──────────────────────────────── */
+    #chat-panel {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.875rem 1.25rem;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .chat-header .title {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 600;
+      color: #e6edf3;
+      font-size: 0.95rem;
+    }
+
+    .chat-header .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 6px #22c55e;
+      flex-shrink: 0;
+    }
+
+    .transport-badge {
+      font-size: 0.725rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      background: rgba(124, 58, 237, 0.2);
+      color: #c4b5fd;
+      border: 1px solid rgba(124, 58, 237, 0.35);
+      font-weight: 500;
+    }
+
+    .btn-disconnect {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.9rem;
+      background: transparent;
+      border: 1px solid #ef4444;
+      border-radius: 0.5rem;
+      color: #ef4444;
+      font-size: 0.825rem;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+
+    .btn-disconnect:hover { background: rgba(239, 68, 68, 0.1); }
+
+    /* Messages */
+    #history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem;
+      list-style: none;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+
+    #history::-webkit-scrollbar { width: 5px; }
+    #history::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    .msg {
+      display: flex;
+      flex-direction: column;
+      max-width: 68%;
+      animation: fadeUp 0.2s ease;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .msg.sent     { align-self: flex-end;   align-items: flex-end; }
+    .msg.received { align-self: flex-start; align-items: flex-start; }
+    .msg.system   { align-self: center;     align-items: center; max-width: 90%; }
+
+    .msg-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      margin-bottom: 0.2rem;
+      padding: 0 0.25rem;
+    }
+
+    .msg-bubble {
+      padding: 0.5rem 0.9rem;
+      border-radius: 1rem;
+      font-size: 0.9rem;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .msg.sent .msg-bubble {
+      background: var(--msg-out);
+      color: #fff;
+      border-bottom-right-radius: 0.25rem;
+    }
+
+    .msg.received .msg-bubble {
+      background: var(--msg-in);
+      color: #cdd9e5;
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 0.25rem;
+    }
+
+    .msg.system .msg-bubble {
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 0.2rem 0.8rem;
+    }
+
+    .msg.system.error .msg-bubble {
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+
+    /* Chat footer */
+    .chat-footer {
+      padding: 0.875rem 1.25rem;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 0.6rem;
+      align-items: center;
+    }
+
+    #text {
+      flex: 1;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      color: #e6edf3;
+      padding: 0.6rem 1rem;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    #text:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+    }
+
+    #text::placeholder { color: var(--text-muted); }
+
+    .btn-send {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: var(--accent);
+      border: none;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+      transition: background 0.15s, transform 0.1s;
+    }
+
+    .btn-send:hover  { background: var(--accent-hover); }
+    .btn-send:active { transform: scale(0.92); }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Connect / landing screen ─────────────────────────────────── -->
+  <div id="connect-panel">
+    <div class="page-layout">
+
+      <!-- Description column -->
+      <div class="page-desc">
+        <div class="hero-badge">Interactive Demo</div>
+        <h1 class="hero-title">browser-tab-ipc</h1>
+        <p class="hero-lead">Real-time messaging between browser tabs</p>
+        <p class="hero-body">
+          A lightweight TypeScript / JavaScript library for inter-process communication between browser tabs.
+          Messages are delivered instantly using the best transport available in your browser —
+          no server, no WebSockets, no configuration required.
+        </p>
+
+        <p class="section-label">How to use this demo</p>
+        <ol class="how-to">
+          <li>Open this page in <strong style="color:#e6edf3">two or more browser tabs</strong></li>
+          <li>Select a transport and click <strong style="color:#e6edf3">Connect</strong> in each tab</li>
+          <li>Type a message and press <strong style="color:#e6edf3">Enter</strong> or click Send</li>
+          <li>The message appears instantly in all other connected tabs</li>
+        </ol>
+
+        <p class="section-label">Transport options</p>
+        <div class="transport-list">
+          <div class="transport-item">
+            <i class="bi bi-shuffle"></i>
+            <div>
+              <strong>Auto</strong>
+              <span>Picks the best available transport automatically (recommended)</span>
+            </div>
+          </div>
+          <div class="transport-item">
+            <i class="bi bi-broadcast"></i>
+            <div>
+              <strong>BroadcastChannel</strong>
+              <span>Fastest option — native browser API, same-origin only</span>
+            </div>
+          </div>
+          <div class="transport-item">
+            <i class="bi bi-people"></i>
+            <div>
+              <strong>SharedWorker</strong>
+              <span>Cross-origin capable — requires ipc-worker.js to be hosted locally</span>
+            </div>
+          </div>
+          <div class="transport-item">
+            <i class="bi bi-database"></i>
+            <div>
+              <strong>SessionStorage</strong>
+              <span>Universal fallback — works in every browser</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-links">
+          <a class="hero-link npm" href="https://www.npmjs.com/package/@lopatnov/browser-tab-ipc" target="_blank" rel="noopener">
+            <i class="bi bi-box-seam"></i> npm
+          </a>
+          <a class="hero-link github" href="https://github.com/lopatnov/browser-tab-ipc" target="_blank" rel="noopener">
+            <i class="bi bi-github"></i> GitHub
+          </a>
+        </div>
+      </div>
+
+      <!-- Connect card -->
+      <div class="connect-card">
+        <div class="logo"><i class="bi bi-diagram-3"></i></div>
+        <h2>Connect</h2>
+        <p class="card-sub">Choose a transport and join the channel</p>
+
+        <div class="mb-3">
+          <label for="workerUrl">SharedWorker URL</label>
+          <input id="workerUrl" type="text" class="form-control" value="/dist/ipc-worker.js" />
+        </div>
+
+        <div class="mb-4">
+          <label>Transport</label>
+          <div id="options" class="transport-grid">
+            <div class="transport-option">
+              <input type="radio" id="anyTransport" name="transport" value="anyTransport" checked />
+              <label for="anyTransport"><i class="bi bi-shuffle"></i> Auto</label>
+            </div>
+            <div class="transport-option">
+              <input type="radio" id="broadcastChannelTransport" name="transport" value="broadcastChannelTransport" />
+              <label for="broadcastChannelTransport"><i class="bi bi-broadcast"></i> BroadcastChannel</label>
+            </div>
+            <div class="transport-option">
+              <input type="radio" id="sharedWorkerTransport" name="transport" value="sharedWorkerTransport" />
+              <label for="sharedWorkerTransport"><i class="bi bi-people"></i> SharedWorker</label>
+            </div>
+            <div class="transport-option">
+              <input type="radio" id="localStorageTransport" name="transport" value="localStorageTransport" />
+              <label for="localStorageTransport"><i class="bi bi-database"></i> SessionStorage</label>
+            </div>
+          </div>
+        </div>
+
+        <button id="connectBtn" type="button" class="btn-connect">
+          <i class="bi bi-lightning-charge-fill me-1"></i> Connect
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── Chat screen ─────────────────────────────── -->
+  <div id="chat-panel" class="d-none">
+    <header class="chat-header">
+      <div class="title">
+        <span class="status-dot"></span>
+        <span>browser-tab-ipc</span>
+        <span id="transport-badge" class="transport-badge"></span>
+      </div>
+      <button id="disconnectBtn" type="button" class="btn-disconnect">
+        <i class="bi bi-x-circle"></i> Disconnect
+      </button>
+    </header>
+
+    <ul id="history"></ul>
+
+    <footer class="chat-footer">
+      <div class="input-row">
+        <input id="text" type="text" placeholder="Type a message and press Enter…" autocomplete="off" />
+        <button id="sendBtn" type="button" class="btn-send" title="Send">
+          <i class="bi bi-send-fill"></i>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../dist/library.umd.js"></script>
+  <script src="./demo.js"></script>
+</body>
+
+</html>

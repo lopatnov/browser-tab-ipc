@@ -9,8 +9,6 @@
 
 ## Reporting a Vulnerability
 
-Create an [issue][issue] to report a vulnerability, please.
-
-Go to <https://github.com/lopatnov/browser-tab-ipc/issues>, create `New issue`, describe the vulnerability as well as possible. When I read the vulnerability description, I'll give a feedback on further actions.
-
-[issue]: https://github.com/lopatnov/browser-tab-ipc/issues
+Please report security vulnerabilities via
+[GitHub Security Advisories](https://github.com/lopatnov/browser-tab-ipc/security/advisories/new)
+— do NOT open a public issue for security vulnerabilities.

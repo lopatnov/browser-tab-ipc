@@ -4,25 +4,21 @@
     if (e?.source && e.source instanceof MessagePort) {
       const port = e.source;
       ports.add(port);
-      port.addEventListener(
-        'message',
-        (ev: any) => {
-          const data = ev.data;
-          const cmd = data?.cmd;
-          switch (cmd) {
-            case 'x':
-              ports.delete(port);
-              break;
-            default:
-              ports.forEach((p) => {
-                if (p !== port) {
-                  p.postMessage(data);
-                }
-              });
-          }
-        },
-        false,
-      );
+      port.onmessage = (ev: MessageEvent) => {
+        const data = ev.data;
+        const cmd = data?.cmd;
+        switch (cmd) {
+          case 'x':
+            ports.delete(port);
+            break;
+          default:
+            ports.forEach((p) => {
+              if (p !== port) {
+                p.postMessage(data);
+              }
+            });
+        }
+      };
       port.start();
     }
   };

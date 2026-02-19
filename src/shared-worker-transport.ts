@@ -31,7 +31,7 @@ export class SharedWorkerTransport extends AbstractTransport {
         this.onConnected(state);
         return state;
       }
-    } catch (ex: any) {
+    } catch (ex: unknown) {
       state = this.getConnectionState();
       state.error = ex;
       this.onConnectionError(state);
@@ -64,6 +64,8 @@ export class SharedWorkerTransport extends AbstractTransport {
     return new Promise((resolve) => {
       const xhr = new XMLHttpRequest();
       xhr.open('HEAD', url);
+      xhr.timeout = 5000;
+      xhr.ontimeout = () => resolve(false);
       xhr.send();
       xhr.onload = () => {
         resolve(xhr.status < 400);

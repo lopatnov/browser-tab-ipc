@@ -34,7 +34,7 @@ ThirdPartyNotices.txt eol=crlf
 ###############################
 
 ## Documents
-*.{pdf,rtf,doc,docx,xsl,xslx} filter=lfs diff=lfs merge=lfs -text
+*.{pdf,rtf,doc,docx,xsl,xlsx} filter=lfs diff=lfs merge=lfs -text
 
 ## Fonts
 *.{woff2,otf,ttf,[wW][oO][fF][fF]2,[oO][tT][fF],[tT][tT][fF]} filter=lfs diff=lfs merge=lfs

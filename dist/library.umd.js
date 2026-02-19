@@ -512,8 +512,8 @@
 	    onDisconnected(state) {
 	        this.emit(EventDisconnected, state);
 	    }
-	    onMessage(state) {
-	        this.emit(EventMessage, state);
+	    onMessage(message) {
+	        this.emit(EventMessage, message);
 	    }
 	    /**
 	     * Connected event. It executes callback after establishing connection
@@ -615,9 +615,9 @@
 	        this.transportType = exports.TransportType.sessionStorage;
 	        this.isConnected = false;
 	        this.keyPrefix = DefaultStorageKeyPrefix;
-	        this.messageTime = new Date(0, 0, 0, 0, 0, 0, 0);
+	        this.messageTime = new Date(0);
 	        this.messageExpiredTime = DefaultStorageExpiredTime;
-	        this.lastClearTime = new Date(0, 0, 0, 0, 0, 0, 0);
+	        this.lastClearTime = new Date(0);
 	        this.maxStorageCleanTime = DefaultStorageExpiredTime * 3;
 	        this.beforeunloadHandler = () => this.disconnect();
 	        this.storageHandler = (e) => {
@@ -691,7 +691,7 @@
 	    setMessageItem(message, date) {
 	        const key = `${this.keyPrefix}_msg_${date.getTime()}`;
 	        const msgObject = {
-	            date,
+	            date: date.toISOString(),
 	            message,
 	        };
 	        const value = JSON.stringify(msgObject);
@@ -715,21 +715,16 @@
 	        const keys = this.getKeys(`${this.keyPrefix}_msg_`);
 	        keys.forEach((key) => {
 	            const value = localStorage.getItem(key);
-	            try {
-	                if (value) {
-	                    const msgObject = JSON.parse(value);
-	                    const now = new Date();
-	                    const dateStr = msgObject === null || msgObject === void 0 ? void 0 : msgObject.date;
-	                    const date = new Date(dateStr);
-	                    if (!date || now.getTime() - date.getTime() > this.messageExpiredTime) {
-	                        this.removeItem(key);
-	                    }
-	                }
-	                else {
+	            if (value) {
+	                const msgObject = JSON.parse(value);
+	                const now = new Date();
+	                const date = new Date(msgObject.date);
+	                if (now.getTime() - date.getTime() > this.messageExpiredTime) {
 	                    this.removeItem(key);
 	                }
 	            }
-	            finally {
+	            else {
+	                this.removeItem(key);
 	            }
 	        });
 	        this.lastClearTime = new Date();
@@ -751,23 +746,18 @@
 	        let maxTime = this.messageTime;
 	        keys.forEach((key) => {
 	            const value = localStorage.getItem(key);
-	            try {
-	                if (value) {
-	                    const msgObject = JSON.parse(value);
-	                    const dateStr = msgObject === null || msgObject === void 0 ? void 0 : msgObject.date;
-	                    const date = new Date(dateStr);
-	                    if (date > this.messageTime) {
-	                        this.onMessage(msgObject.message);
-	                        if (date > maxTime) {
-	                            maxTime = date;
-	                        }
+	            if (value) {
+	                const msgObject = JSON.parse(value);
+	                const date = new Date(msgObject.date);
+	                if (date > this.messageTime) {
+	                    this.onMessage(msgObject.message);
+	                    if (date > maxTime) {
+	                        maxTime = date;
 	                    }
 	                }
-	                else {
-	                    this.removeItem(key);
-	                }
 	            }
-	            finally {
+	            else {
+	                this.removeItem(key);
 	            }
 	        });
 	        this.messageTime = maxTime;
@@ -834,6 +824,8 @@
 	        return new Promise((resolve) => {
 	            const xhr = new XMLHttpRequest();
 	            xhr.open('HEAD', url);
+	            xhr.timeout = 5000;
+	            xhr.ontimeout = () => resolve(false);
 	            xhr.send();
 	            xhr.onload = () => {
 	                resolve(xhr.status < 400);
@@ -918,6 +910,10 @@
 	        }
 	    }
 	    connect(options) {
+	        var _a;
+	        if (this.transport) {
+	            return Promise.resolve({ type: (_a = this.transport.transportType) !== null && _a !== void 0 ? _a : null, connected: true });
+	        }
 	        this.extendOptions(options);
 	        return this.connectTransport(this.options).then((state) => {
 	            this.subscribeTransport();

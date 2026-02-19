@@ -22,7 +22,7 @@ export class BroadcastChannelTransport extends AbstractTransport {
       state = this.getConnectionState();
       this.onConnected(state);
       return state;
-    } catch (ex: any) {
+    } catch (ex: unknown) {
       state = this.getConnectionState();
       state.error = ex;
       this.onConnectionError(state);

@@ -71,7 +71,7 @@ $(function () {
   }
 
   function getTransportType() {
-    const option = $('input[name=transport]:checked', '#options').val();
+    const option = $('input[name=transport]:checked').val();
     switch (option) {
       case 'sharedWorkerTransport':     return browserTabIpc.TransportType.sharedWorker;
       case 'localStorageTransport':     return browserTabIpc.TransportType.sessionStorage;

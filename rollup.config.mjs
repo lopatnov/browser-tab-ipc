@@ -40,7 +40,7 @@ export default [
     external,
     plugins,
   },
-  // UMD — для браузерных <script> тегов
+  // UMD — for browser <script> tags
   {
     input: `src/${pkg.libraryFile}.ts`,
     output: {
@@ -70,7 +70,7 @@ export default [
     external,
     plugins: [...plugins, uglify()],
   },
-  // SharedWorker script (IIFE — для браузерного контекста воркера)
+  // SharedWorker script (IIFE — for browser worker context)
   {
     input: `src/ipc-worker.ts`,
     output: [
