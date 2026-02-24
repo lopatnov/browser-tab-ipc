@@ -13,12 +13,7 @@ const pkg = require('./package.json');
 
 const external = [...Object.keys(pkg.devDependencies || {}), ...Object.keys(pkg.peerDependencies || {})];
 
-const plugins = [
-  json(),
-  typescript({typescript: ts}),
-  resolve({browser: true, preferBuiltins: false}),
-  commonjs(),
-];
+const plugins = [json(), typescript({typescript: ts}), resolve({browser: true, preferBuiltins: false}), commonjs()];
 
 export default [
   // ESM (.mjs) + CJS (.cjs)
@@ -68,7 +63,12 @@ export default [
       },
     },
     external,
-    plugins: [...plugins, uglify()],
+    plugins: [
+      ...plugins,
+      uglify({
+        hook: 'renderChunk',
+      }),
+    ],
   },
   // SharedWorker script (IIFE — for browser worker context)
   {
