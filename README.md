@@ -306,12 +306,19 @@ Contributions are welcome! Please read [CONTRIBUTING.md](CONTRIBUTING.md) before
 - [Yarn](https://yarnpkg.com/) — package management and script runner
 - [Babel](https://babeljs.io/) — TypeScript transpilation pipeline for tests
 - [Puppeteer](https://pptr.dev/) + [Jest](https://jestjs.io/) — cross-tab integration testing in a real browser
+- [ESLint](https://eslint.org/) + [Prettier](https://prettier.io/) — linting and formatting
 
 ---
 
 ## License
 
 [Apache-2.0](LICENSE) © 2019–2026 [Oleksandr Lopatnov](https://github.com/lopatnov) · [LinkedIn](https://www.linkedin.com/in/lopatnov/)
+
+[eventemitter]: https://nodejs.org/api/events.html
+[browsertabipc]: ./src/browser-tab-ipc.ts
+[transporttype]: ./src/transport-type.enum.ts
+[connectionoptions]: ./src/connection-options.ts
+[connectionstate]: ./src/connection-state.ts
 
 [eventemitter]: https://nodejs.org/api/events.html
 [browsertabipc]: ./src/browser-tab-ipc.ts

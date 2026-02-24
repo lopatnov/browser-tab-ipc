@@ -55,8 +55,7 @@
     "lint:fix": "eslint src --fix",
     "format": "prettier --write src",
     "release": "release-it minor",
-    "configure-npm": "node ./set-registry.js -s https://registry.npmjs.org",
-    "configure-gpr": "node ./set-registry.js -s https://npm.pkg.github.com",
+
     "serve": "express-reverse-proxy",
     "test": "jest"
   },

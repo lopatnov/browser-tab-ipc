@@ -1,0 +1,41 @@
+name: Publish NPM package to npmjs.org
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      PORT: 4444
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+          cache: "yarn"
+      - run: yarn install --frozen-lockfile
+      - run: yarn lint
+      - run: yarn type-check
+      - run: yarn build
+      - run: yarn test
+
+  publish-npm:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+          registry-url: "https://registry.npmjs.org"
+      - run: yarn install --frozen-lockfile
+      - run: yarn build
+      - run: npm publish --provenance --access=public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
